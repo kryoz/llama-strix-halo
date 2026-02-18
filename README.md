@@ -25,9 +25,9 @@ Find latest stable kernel
 sudo mainline --list | grep "6.1[6-9]\|6.2"
 ```
 
-My llama.cpp on 6.18 always crushed so I installed 6.17
+For example
 ```
-sudo mainline --install 6.17.9
+sudo mainline --install 6.18.6
 ```
 
 Edit kernel startup params
@@ -163,7 +163,8 @@ nano ~/llama-starter.sh
 ```
 
 Paste and modify again `your-user-name`.
-This command will configure llama.cpp to load models dynamically which were found at dir `~/models`
+This command will configure llama.cpp to load models dynamically which were found at dir `~/models`.
+
 `--models-max 2` specifies to handle up 2 models in RAM.
 
 ```bash
