@@ -27,7 +27,7 @@ sudo mainline --list | grep "6.1[6-9]\|6.2"
 
 For example
 ```
-sudo mainline --install 6.18.6
+sudo mainline --install 6.17.9
 ```
 
 Edit kernel startup params
