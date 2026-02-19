@@ -127,6 +127,7 @@ cmake -B build -S . -DGGML_HIP=ON -DAMDGPU_TARGETS="gfx1151" -DGGML_HIP_ROCWMMA_
 cmake --build build --config Release -j$(nproc)
 exit
 ```
+Note: that this distrobox allows to build llama.cpp but its performance is not as good as fresh prebuilt images of `rocm7-nightlies`
 
 Now let's create systemd service to handle llama.cpp
 
