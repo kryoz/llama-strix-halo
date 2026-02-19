@@ -115,7 +115,7 @@ sudo loginctl enable-linger $USER
 ```
 
 Install one of toolboxes from [kyuz0](https://hub.docker.com/r/kyuz0/amd-strix-halo-toolboxes/tags).
-At the moment rocm7-nightlies is the most fast but may have issues.
+At the moment `rocm7-nightlies` is the fastest in most cases but may have issues.
 Take a look for [benchmark comparison](https://kyuz0.github.io/amd-strix-halo-toolboxes/)
 ```
 distrobox create rocm7-nightlies --image docker.io/kyuz0/amd-strix-halo-toolboxes:rocm7-nightlies --additional-flags "--device /dev/dri --device /dev/kfd --group-add video --group-add render  --security-opt seccomp=unconfined"
