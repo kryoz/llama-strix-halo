@@ -1,6 +1,6 @@
 # Setup llama.cpp server on AMD Strix Halo 128Gb version
 
-This note describes how to configure local high-performance LLM setup with fresh install of Ubuntu Server 24.04 LTS.
+This note describes how to configure step by step local high-performance LLM setup with fresh install of Ubuntu Server 24.04 LTS and llama.cpp.
 
 Before you proceed you MUST configure BIOS settings in graphics section to dedicate MINIMUM amount of RAM to GPU in UMA_SPECIFIED section.
 Some systems allow to select 512Mb, some 2Gb.
@@ -27,7 +27,7 @@ sudo mainline --list | grep "6.1[6-9]\|6.2"
 
 For example
 ```
-sudo mainline --install 6.17.9
+sudo mainline --install 6.18.6
 ```
 
 Edit kernel startup params
@@ -112,22 +112,9 @@ Install podman and distrobox
 sudo apt install podman -y
 curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sudo sh
 sudo loginctl enable-linger $USER
-distrobox create llama-rocm-7rc-rocwmma   --image docker.io/kyuz0/amd-strix-halo-toolboxes:rocm-7rc-rocwmma   --additional-flags "--device /dev/dri --device /dev/kfd --group-add video --group-add render  --security-opt seccomp=unconfined"
+distrobox create rocm7-nightlies --image docker.io/kyuz0/amd-strix-halo-toolboxes:rocm7-nightlies --additional-flags "--device /dev/dri --device /dev/kfd --group-add video --group-add render  --security-opt seccomp=unconfined"
 ```
 
-Enter into container then build optimized llama.cpp
-```
-distrobox enter llama-rocm-7rc-rocwmma
-sudo dnf install -y cmake gcc-c++ git libcurl-devel python3-pip
-git clone https://github.com/ggerganov/llama.cpp.git
-
-cd llama.cpp
-cmake -B build -S . -DGGML_HIP=ON -DAMDGPU_TARGETS="gfx1151" -DGGML_HIP_ROCWMMA_FATTN=ON -DGGML_AVX512=ON -DGGML_AVX2=ON -DGGML_AVX=ON -DGGML_AVX512_VBMI=ON -DGGML_AVX512_VNNI=ON -DGGML_AVX512_BF16=ON -DCMAKE_C_FLAGS="-O3 -march=znver5 -mtune=znver5" -DCMAKE_CXX_FLAGS="-O3 -march=znver5 -mtune=znver5" -DGGML_NATIVE=OFF -DGGML_FMA=ON -DGGML_F16C=ON -DCMAKE_BUILD_TYPE=Release
-
-cmake --build build --config Release -j$(nproc)
-exit
-```
-Note: that this distrobox allows to build llama.cpp but its performance is not as good as fresh prebuilt images of `rocm7-nightlies`
 
 Now let's create systemd service to handle llama.cpp
 
@@ -152,7 +139,7 @@ Environment="XDG_RUNTIME_DIR=/run/user/1000"
 Environment="LLM_PORT=9999"
 
 ExecStart=/home/your-user-name/llama-starter.sh
-ExecStop=/usr/local/bin/distrobox enter llama-rocm-7rc-rocwmma -- /bin/bash -c "/usr/sbin/lsof -ti:${LLM_PORT} | xargs -r kill -TERM"
+ExecStop=/usr/local/bin/distrobox enter rocm7-nightlies -- /bin/bash -c "/usr/sbin/lsof -ti:${LLM_PORT} | xargs -r kill -TERM"
 
 [Install]
 WantedBy=multi-user.target
@@ -174,7 +161,7 @@ This command will configure llama.cpp to load models dynamically which were foun
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 export MY_DIR=/home/your-user-name
 
-exec /usr/local/bin/distrobox enter llama-rocm-7rc-rocwmma -- \
+exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   ${MY_DIR}/llama.cpp/build/bin/llama-server \
   --models-preset ${MY_DIR}/llama.ini \
   --models-max 2 \
