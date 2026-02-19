@@ -25,7 +25,7 @@ Find latest stable kernel
 sudo mainline --list | grep "6.1[6-9]\|6.2"
 ```
 
-For example
+For example 6.18.6
 ```
 sudo mainline --install 6.18.6
 ```
@@ -39,7 +39,7 @@ Look for this line and modify accordingly. My benchmarks proved `amd_iommu=off` 
 GRUB_CMDLINE_LINUX_DEFAULT="amd_iommu=off amdgpu.gttsize=129024 ttm.pages_limit=33030144"
 ```
 
-Configure module
+Configure module with same numbers
 ```
 sudo nano /etc/modprobe.d/amdgpu_llm_optimized.conf
 ```
@@ -49,7 +49,7 @@ options ttm pages_limit=33030144
 options ttm page_pool_size=33030144
 ```
 
-Run update initramfs and grub
+Update initramfs and grub
 ```
 sudo update-grub
 sudo update-initramfs -u -k all
@@ -112,9 +112,19 @@ Install podman and distrobox
 sudo apt install podman -y
 curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sudo sh
 sudo loginctl enable-linger $USER
+```
+
+Install one of toolboxes from [kyuz0](https://hub.docker.com/r/kyuz0/amd-strix-halo-toolboxes/tags).
+At the moment rocm7-nightlies is the most fast but may have issues.
+Take a look for [benchmark comparison](https://kyuz0.github.io/amd-strix-halo-toolboxes/)
+```
 distrobox create rocm7-nightlies --image docker.io/kyuz0/amd-strix-halo-toolboxes:rocm7-nightlies --additional-flags "--device /dev/dri --device /dev/kfd --group-add video --group-add render  --security-opt seccomp=unconfined"
 ```
 
+At this point I recommend to reboot first to apply all settings
+```
+sudo reboot
+```
 
 Now let's create systemd service to handle llama.cpp
 
