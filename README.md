@@ -34,9 +34,9 @@ Edit kernel startup params
 ```
 sudo nano /etc/default/grub
 ```
-Look for this line and modify
+Look for this line and modify accordingly. My benchmarks proved `amd_iommu=off` is better than `amd_iommu=pt`
 ```
-GRUB_CMDLINE_LINUX_DEFAULT="amd_iommu=pt amdgpu.gttsize=129024 ttm.pages_limit=33030144"
+GRUB_CMDLINE_LINUX_DEFAULT="amd_iommu=off amdgpu.gttsize=129024 ttm.pages_limit=33030144"
 ```
 
 Configure module
