@@ -245,3 +245,15 @@ journalctl --user -u llama -f -n 100
 I hope it helped you.
 
 Also my credits to https://github.com/Gygeek/Framework-strix-halo-llm-setup 
+
+P.S. Llama.cpp buid tips
+```bash
+export ROCM_PATH /opt/rocm
+export HSA_OVERRIDE_GFX_VERSION "11.5.1"
+export PATH=$PATH:$ROCM_PATH/bin 
+export LD_LIBRARY_PATH="$ROCM_PATH/lib $ROCM_PATH/lib64 $LD_LIBRARY_PATH"
+export HIPCC_FLAGS="--amdgpu-target=gfx1151 --hip-link-llvm-bitcode"
+git clone https://github.com/ggerganov/llama.cpp --depth 1
+cd llama.cpp
+cmake -B build . -DCMAKE_CXX_FLAGS="-march=native -Ofast -DNDEBUG -flto -fno-finite-math-only" -DCMAKE_C_FLAGS="-march=native -Ofast -flto -DNDEBUG -fno-finite-math-only" -DCMAKE_LD_FLAGS="-march=native -DNDEBUG -Ofast -flto -fno-finite-math-only" -DGGML_HIP=ON -DAMDGPU_TARGETS="gfx1151" -DGGML_AVX512=ON -DGGML_AVX2=ON -DGGML_AVX=ON -DGGML_AVX512_VBMI=ON -DGGML_AVX512_VNNI=ON -DGGML_AVX512_BF16=ON -DGGML_NATIVE=OFF -DGGML_FMA=ON -DGGML_F16C=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
