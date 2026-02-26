@@ -172,12 +172,12 @@ export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 export MY_DIR=/home/your-user-name
 
 exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
-  ${MY_DIR}/llama.cpp/build/bin/llama-server \
+  llama-server \
   --models-preset ${MY_DIR}/llama.ini \
   --models-max 2 \
   --models-dir ${MY_DIR}/models \
-  -fa on --no-mmap -ngl 999 --parallel 1  \
-  -t 14 -tb 16 -cb --jinja --cache-type-k q8_0 --cache-type-v q8_0 --cache-reuse 12288 --batch-size 2048 --ubatch-size 512 \
+  -fa on --no-mmap -ngl 999 --parallel 2  \
+  -t 2 -tb 4 -cb --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -189,27 +189,29 @@ nano ~/llama.ini
 My example
 ```ini
 [qwen-autocomplete]
-model = /home/your-user-name/models/qwen2.5-coder-14b/qwen2.5-coder-14b-instruct-q6_k-00001-of-00002.gguf
-ctx-size = 4096
+model = /home/your-user-name/models/qwen-autocomplete/qwen2.5-coder-14b-instruct-q6_k-00001-of-00002.gguf
+chat-template = chatml
+ctx-size = 8096
 temp = 0.15
 top-p = 0.95
 top-k = 40
 min-p = 0.01
 repeat-penalty = 1.0
-cache-type-k = q6_0
-cache-type-v = q6_0
+cache-type-k = q8_0
+cache-type-v = q8_0
 
 [qwen3-coder]
-model = /home/your-user-name/models/QwenNext/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
-ctx-size = 150000
-temp = 1.0
+model = /home/your-user-name/models/qwen3-coder/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
+ctx-size = 262144
+n-predict = 32768
+temp = 0.2
 top-p = 0.95
 top-k = 40
 min-p = 0.01
 repeat-penalty = 1.0
-seed = 3407
 cache-type-k = q8_0
 cache-type-v = q8_0
+n-predict = 8192
 
 [GPT]
 model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
@@ -220,14 +222,41 @@ cache-type-k = q8_0
 cache-type-v = q8_0
 
 [GLM]
-model = /home/your-user-name/models/GLM-4.7-Flash-UD-Q8_K_XL.gguf
-ctx-size = 202752
+model = /home/your-user-name/models/GLM/GLM-4.7-Flash-UD-Q8_K_XL.gguf
+ctx-size = 150000
 min-p = 0.01
 top-p = 0.95
-temp = 0.8
+temp = 0.2
 repeat-penalty = 1.0
 cache-type-k = q8_0
 cache-type-v = q8_0
+
+[Qwen3-VL]
+model = /home/your-user-name/models/Qwen3-VL/Qwen3-VL-30B-A3B-Instruct-UD-Q8_K_XL.gguf
+mmproj = /home/your-user-name/models/mmproj-F16.gguf
+chat-template = chatml
+ctx-size = 32768
+min-p = 0.05
+top-k = 40
+top-p = 0.95
+temp = 0.2
+repeat-penalty = 1.05
+cache-type-k = q8_0
+cache-type-v = q8_0
+presence-penalty = 0
+image-min-tokens = 1024
+
+[MiniMax-M2.5]
+model = /home/your-user-name/models/MiniMax-M2.5/MiniMax-M2.5-UD-Q3_K_XL-00001-of-00004.gguf
+ctx-size = 163840
+n-predict = 16384
+temp = 0.2
+top-p = 0.95
+top-k = 40
+min-p = 0.01
+repeat-penalty = 1.0
+cache-type-k = q4_0
+cache-type-v = q4_0
 ```
 
 Now register your service
