@@ -162,8 +162,8 @@ nano ~/llama-starter.sh
 
 Paste and modify again `your-user-name`.
 This command will configure llama.cpp to load models dynamically which were found at dir `~/models`.
-
 `--models-max 2` specifies to handle up 2 models in RAM.
+I tuned params to handle at agents workflow as fast as it can be.
 
 ```bash
 #!/bin/bash
@@ -177,7 +177,7 @@ exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   --models-max 2 \
   --models-dir ${MY_DIR}/models \
   -fa on --no-mmap -ngl 999 --parallel 2  \
-  -t 2 -tb 4 -cb --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 \
+  -t 2 -tb 4 -cb --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 --swa-full --slot-prompt-similarity 0.85 --ctx-checkpoints 128 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -208,7 +208,7 @@ temp = 0.2
 top-p = 0.95
 top-k = 40
 min-p = 0.01
-repeat-penalty = 1.0
+repeat-penalty = 1.05
 cache-type-k = q8_0
 cache-type-v = q8_0
 n-predict = 8192
@@ -218,16 +218,6 @@ model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
 ctx-size = 100000
 temp = 1.0
 min-p = 0.01
-cache-type-k = q8_0
-cache-type-v = q8_0
-
-[GLM]
-model = /home/your-user-name/models/GLM/GLM-4.7-Flash-UD-Q8_K_XL.gguf
-ctx-size = 150000
-min-p = 0.01
-top-p = 0.95
-temp = 0.2
-repeat-penalty = 1.0
 cache-type-k = q8_0
 cache-type-v = q8_0
 
@@ -248,8 +238,8 @@ image-min-tokens = 1024
 
 [MiniMax-M2.5]
 model = /home/your-user-name/models/MiniMax-M2.5/MiniMax-M2.5-UD-Q3_K_XL-00001-of-00004.gguf
-ctx-size = 163840
-n-predict = 16384
+ctx-size = 160000
+n-predict = 32768
 temp = 0.2
 top-p = 0.95
 top-k = 40
