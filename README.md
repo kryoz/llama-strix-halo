@@ -186,20 +186,8 @@ Create custom config for models
 nano ~/llama.ini
 ```
 
-My example
+My example of configuration. Take a note on highly optimized params for Qwen3 Coder Next (speculative decoding without providing draft model) 
 ```ini
-[qwen-autocomplete]
-model = /home/your-user-name/models/qwen-autocomplete/qwen2.5-coder-14b-instruct-q6_k-00001-of-00002.gguf
-chat-template = chatml
-ctx-size = 8096
-temp = 0.15
-top-p = 0.95
-top-k = 40
-min-p = 0.01
-repeat-penalty = 1.0
-cache-type-k = q8_0
-cache-type-v = q8_0
-
 [qwen3-coder]
 model = /home/your-user-name/models/qwen3-coder/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
 ctx-size = 262144
@@ -211,6 +199,12 @@ min-p = 0.01
 repeat-penalty = 1.05
 cache-type-k = q8_0
 cache-type-v = q8_0
+cache-type-k-draft = q4_0
+cache-type-v-draft = q4_0
+spec-type = ngram-map-k
+draft-max = 48
+spec-ngram-size-n = 12
+spec-ngram-size-m = 8
 n-predict = 8192
 
 [GPT]
