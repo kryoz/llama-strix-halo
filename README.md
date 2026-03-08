@@ -199,7 +199,7 @@ exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   --models-max 2 \
   --models-dir ${MY_DIR}/models \
   -fa on --no-mmap -ngl 99 --parallel 2  \
-  -t 2 -tb 16 --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 --swa-full --slot-prompt-similarity 0.85 --ctx-checkpoints 128 \
+  -t 2 -tb 8 --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 --swa-full --slot-prompt-similarity 0.85 --ctx-checkpoints 128 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
