@@ -185,6 +185,8 @@ Using all CPUs CCDs makes less efficient job processing due to concurrent memory
 
 `--parallel 2` - max 2 requests processed at once 
 
+`-cb` - I removed continous batching as it confronts with speculative decoding.
+
 ```bash
 #!/bin/bash
 
@@ -197,7 +199,7 @@ exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   --models-max 2 \
   --models-dir ${MY_DIR}/models \
   -fa on --no-mmap -ngl 99 --parallel 2  \
-  -t 2 -tb 8 -cb --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 --swa-full --slot-prompt-similarity 0.85 --ctx-checkpoints 128 \
+  -t 2 -tb 16 --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 --swa-full --slot-prompt-similarity 0.85 --ctx-checkpoints 128 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -218,13 +220,16 @@ top-k = 40
 min-p = 0.01
 repeat-penalty = 1.1
 cache-type-k = q8_0
-cache-type-v = q4_0
+cache-type-v = q8_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 spec-type = ngram-map-k
-draft-max = 16
+draft-max = 64
+draft-min = 8
 spec-ngram-size-n = 12
 spec-ngram-size-m = 8
+lookup-cache-static = 4096
+lookup-cache-dynamic = 4096
 
 [qwen3-coder]
 model = /home/your-user-name/models/qwen3-coder/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
@@ -236,13 +241,16 @@ top-k = 40
 min-p = 0.01
 repeat-penalty = 1.1
 cache-type-k = q8_0
-cache-type-v = q4_0
+cache-type-v = q8_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 spec-type = ngram-map-k
-draft-max = 16
 spec-ngram-size-n = 12
 spec-ngram-size-m = 8
+draft-max = 64
+draft-min = 8
+lookup-cache-static = 4096
+lookup-cache-dynamic = 4096
 
 [GPT]
 model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
