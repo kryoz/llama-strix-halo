@@ -222,9 +222,10 @@ cache-type-v = q4_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 spec-type = ngram-map-k
-draft-max = 32
+draft-max = 16
 spec-ngram-size-n = 12
 spec-ngram-size-m = 8
+
 [qwen3-coder]
 model = /home/your-user-name/models/qwen3-coder/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
 ctx-size = 196608
@@ -239,7 +240,7 @@ cache-type-v = q4_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 spec-type = ngram-map-k
-draft-max = 32
+draft-max = 16
 spec-ngram-size-n = 12
 spec-ngram-size-m = 8
 
