@@ -107,6 +107,12 @@ net.ipv4.tcp_fastopen = 3
 net.core.netdev_max_backlog = 4096
 ```
 
+Paste to `/etc/security/limits.d/99-llm.conf`
+```
+* soft memlock unlimited
+* hard memlock unlimited
+```
+
 Install podman and distrobox
 ```bash
 sudo apt install podman -y
@@ -188,24 +194,40 @@ nano ~/llama.ini
 
 My example of configuration. Take a note on highly optimized params for Qwen3 Coder Next (speculative decoding without providing draft model) 
 ```ini
+[qwen3-235b]
+model = /home/your-user-name/models/Qwen3-235b/Qwen3-235B-A22B-UD-Q3_K_XL-00001-of-00003.gguf
+ctx-size = 110000
+n-predict = 32768
+temp = 0.3
+top-p = 0.95
+top-k = 40
+min-p = 0.01
+repeat-penalty = 1.1
+cache-type-k = q8_0
+cache-type-v = q4_0
+cache-type-k-draft = q4_0
+cache-type-v-draft = q4_0
+spec-type = ngram-map-k
+draft-max = 32
+spec-ngram-size-n = 12
+spec-ngram-size-m = 8
 [qwen3-coder]
 model = /home/your-user-name/models/qwen3-coder/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
-ctx-size = 262144
+ctx-size = 196608
 n-predict = 32768
 temp = 0.2
 top-p = 0.95
 top-k = 40
 min-p = 0.01
-repeat-penalty = 1.05
+repeat-penalty = 1.1
 cache-type-k = q8_0
-cache-type-v = q8_0
+cache-type-v = q4_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 spec-type = ngram-map-k
-draft-max = 48
+draft-max = 32
 spec-ngram-size-n = 12
 spec-ngram-size-m = 8
-n-predict = 8192
 
 [GPT]
 model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
@@ -230,17 +252,6 @@ cache-type-v = q8_0
 presence-penalty = 0
 image-min-tokens = 1024
 
-[MiniMax-M2.5]
-model = /home/your-user-name/models/MiniMax-M2.5/MiniMax-M2.5-UD-Q3_K_XL-00001-of-00004.gguf
-ctx-size = 160000
-n-predict = 32768
-temp = 0.2
-top-p = 0.95
-top-k = 40
-min-p = 0.01
-repeat-penalty = 1.0
-cache-type-k = q4_0
-cache-type-v = q4_0
 ```
 
 Now register your service
