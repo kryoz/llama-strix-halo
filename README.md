@@ -168,8 +168,11 @@ nano ~/llama-starter.sh
 
 Paste and modify again `your-user-name`.
 This command will configure llama.cpp to load models dynamically which were found at dir `~/models`.
-`--models-max 2` specifies to handle up 2 models in RAM.
 I tuned params to handle at agents workflow as fast as it can be.
+`numactl --cpunodebind=0 --membind=0 ` - binds to CPU CCD 0 and `-tb 8` specifies use all threads on that CCD. 
+Using all CPUs CCDs makes less efficient job processing due to concurrent memory access between them and GPU.
+`--models-max 2` specifies to handle up 2 models in RAM.
+`--parallel 2` - max 2 requests processed at once 
 
 ```bash
 #!/bin/bash
@@ -178,12 +181,12 @@ export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 export MY_DIR=/home/your-user-name
 
 exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
-  llama-server \
+  numactl --cpunodebind=0 --membind=0 llama-server \
   --models-preset ${MY_DIR}/llama.ini \
   --models-max 2 \
   --models-dir ${MY_DIR}/models \
-  -fa on --no-mmap -ngl 999 --parallel 2  \
-  -t 2 -tb 4 -cb --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 --swa-full --slot-prompt-similarity 0.85 --ctx-checkpoints 128 \
+  -fa on --no-mmap -ngl 99 --parallel 2  \
+  -t 2 -tb 8 -cb --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 --swa-full --slot-prompt-similarity 0.85 --ctx-checkpoints 128 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -231,11 +234,11 @@ spec-ngram-size-m = 8
 
 [GPT]
 model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
-ctx-size = 100000
+ctx-size = 120000
 temp = 1.0
 min-p = 0.01
 cache-type-k = q8_0
-cache-type-v = q8_0
+cache-type-v = q4_0
 
 [Qwen3-VL]
 model = /home/your-user-name/models/Qwen3-VL/Qwen3-VL-30B-A3B-Instruct-UD-Q8_K_XL.gguf
