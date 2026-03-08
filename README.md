@@ -34,7 +34,9 @@ Edit kernel startup params
 ```
 sudo nano /etc/default/grub
 ```
-Look for this line and modify accordingly. This params allow to allocate all available shared memory to GPU.
+Look for this line and modify accordingly. 
+This params allow to allocate all available shared memory to GPU.
+
 My benchmarks proved `amd_iommu=off` is better than `amd_iommu=pt`.
 ```
 GRUB_CMDLINE_LINUX_DEFAULT="amd_iommu=off amdgpu.gttsize=131072 ttm.pages_limit=33554432"
@@ -138,6 +140,7 @@ Now let's create systemd service to handle llama.cpp
 ```
 nano ~/.config/systemd/user/llama.service
 ```
+
 Paste this but pay attension to change `your-user-name` and customize `LLM_PORT=9999`
 ```systemd
 [Unit]
@@ -168,11 +171,18 @@ nano ~/llama-starter.sh
 ```
 
 Paste and modify again `your-user-name`.
+
 This command will configure llama.cpp to load models dynamically which were found at dir `~/models`.
+
 I tuned params to handle at agents workflow as fast as it can be.
+
 `numactl --cpunodebind=0 --membind=0 ` - binds to CPU CCD 0 and `-tb 8` specifies use all threads on that CCD. 
+"Threads batch" is for prompt processing. It utilizes CPU.
+
 Using all CPUs CCDs makes less efficient job processing due to concurrent memory access between them and GPU.
+
 `--models-max 2` specifies to handle up 2 models in RAM.
+
 `--parallel 2` - max 2 requests processed at once 
 
 ```bash
