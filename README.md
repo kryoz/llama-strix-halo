@@ -159,7 +159,7 @@ Environment="XDG_RUNTIME_DIR=/run/user/1000"
 Environment="LLM_PORT=9999"
 
 ExecStart=/home/your-user-name/llama-starter.sh
-ExecStop=/usr/local/bin/distrobox enter rocm7-nightlies -- /bin/bash -c "/usr/sbin/lsof -ti:${LLM_PORT} | xargs -r kill -TERM"
+ExecStop=/usr/local/bin/distrobox enter rocm7-nightlies -- /bin/bash -c "pkill -9 llama-server"
 
 [Install]
 WantedBy=multi-user.target
@@ -177,7 +177,12 @@ This command will configure llama.cpp to load models dynamically which were foun
 I tuned params to handle at agents workflow as fast as it can be.
 
 `numactl --cpunodebind=0 --membind=0 ` - binds to CPU CCD 0 and `-tb 8` specifies use all threads on that CCD. 
-"Threads batch" is for prompt processing. It utilizes CPU.
+"Threads batch" is for prompt processing. It utilizes CPU. Note! You must install it manually *in the container*:
+```
+distrobox enter rocm7-nightly
+sudo dnf install numactl
+exit
+```
 
 Using all CPUs CCDs makes less efficient job processing due to concurrent memory access between them and GPU.
 
@@ -196,10 +201,10 @@ export MY_DIR=/home/your-user-name
 exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   numactl --cpunodebind=0 --membind=0 llama-server \
   --models-preset ${MY_DIR}/llama.ini \
-  --models-max 2 \
+  --models-max 1 \
   --models-dir ${MY_DIR}/models \
-  -fa on --no-mmap -ngl 99 --parallel 2  \
-  -t 2 -tb 8 --jinja --cache-reuse 12288 --batch-size 2048 --ubatch-size 1024 --swa-full --slot-prompt-similarity 0.85 --ctx-checkpoints 128 \
+  -fa on --no-mmap -ngl 99 --parallel 1  \
+  -t 2 -tb 16 --jinja --cache-reuse 12288 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -212,7 +217,12 @@ My example of configuration. Take a note on highly optimized params for Qwen3 Co
 ```ini
 [qwen3-235b]
 model = /home/your-user-name/models/Qwen3-235b/Qwen3-235B-A22B-UD-Q3_K_XL-00001-of-00003.gguf
-ctx-size = 110000
+batch-size = 2048
+ubatch-size = 512
+ctx-size = 120000
+swa-full = on
+ctx-checkpoints = 32
+slot-prompt-similarity = 0.85
 n-predict = 32768
 temp = 0.3
 top-p = 0.95
@@ -224,16 +234,21 @@ cache-type-v = q8_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 spec-type = ngram-map-k
-draft-max = 64
 draft-min = 8
+draft-max = 64
 spec-ngram-size-n = 12
 spec-ngram-size-m = 8
 lookup-cache-static = 4096
 lookup-cache-dynamic = 4096
 
 [qwen3-coder]
-model = /home/your-user-name/models/qwen3-coder/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
+model = /home/your-user-name/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
+batch-size = 4096
+ubatch-size = 768
 ctx-size = 196608
+ctx-checkpoints = 64
+swa-full = on
+slot-prompt-similarity = 0.85
 n-predict = 32768
 temp = 0.2
 top-p = 0.95
@@ -244,37 +259,14 @@ cache-type-k = q8_0
 cache-type-v = q8_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
+# actually spec decoding isn't supported by this hybrid model :(
 spec-type = ngram-map-k
-spec-ngram-size-n = 12
-spec-ngram-size-m = 8
-draft-max = 64
-draft-min = 8
+spec-ngram-size-n = 5
+spec-ngram-size-m = 3
+draft-max = 24
+draft-min = 4
 lookup-cache-static = 4096
 lookup-cache-dynamic = 4096
-
-[GPT]
-model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
-ctx-size = 120000
-temp = 1.0
-min-p = 0.01
-cache-type-k = q8_0
-cache-type-v = q4_0
-
-[Qwen3-VL]
-model = /home/your-user-name/models/Qwen3-VL/Qwen3-VL-30B-A3B-Instruct-UD-Q8_K_XL.gguf
-mmproj = /home/your-user-name/models/mmproj-F16.gguf
-chat-template = chatml
-ctx-size = 32768
-min-p = 0.05
-top-k = 40
-top-p = 0.95
-temp = 0.2
-repeat-penalty = 1.05
-cache-type-k = q8_0
-cache-type-v = q8_0
-presence-penalty = 0
-image-min-tokens = 1024
-
 ```
 
 Now register your service
