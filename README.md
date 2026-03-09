@@ -203,8 +203,8 @@ exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   --models-preset ${MY_DIR}/llama.ini \
   --models-max 1 \
   --models-dir ${MY_DIR}/models \
-  -fa on --no-mmap -ngl 99 --parallel 1  \
-  -t 2 -tb 16 --jinja --cache-reuse 12288 \
+  -fa on --no-mmap -ngl 99 --parallel 1 --no-kv-offload --defrag-thold 0.2 \
+  -t 8 -tb 16 --jinja --cache-reuse 12288 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -229,8 +229,8 @@ top-p = 0.95
 top-k = 40
 min-p = 0.01
 repeat-penalty = 1.1
-cache-type-k = q8_0
-cache-type-v = q8_0
+cache-type-k = q4_0
+cache-type-v = q4_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 spec-type = ngram-map-k
@@ -255,8 +255,8 @@ top-p = 0.95
 top-k = 40
 min-p = 0.01
 repeat-penalty = 1.1
-cache-type-k = q8_0
-cache-type-v = q8_0
+cache-type-k = q6_0
+cache-type-v = q6_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 # actually spec decoding isn't supported by this hybrid model :(
