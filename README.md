@@ -186,11 +186,11 @@ exit
 
 Using all CPUs CCDs makes less efficient job processing due to concurrent memory access between them and GPU.
 
-`--models-max 2` specifies to handle up 2 models in RAM.
+`--models-max 1` specifies to handle up 1 models in RAM. The only stable option for auto loading/unloading model on demand.
 
-`--parallel 2` - max 2 requests processed at once 
+`--parallel 1` - max 1 requests processed at once. Available ctx-size divides by this param.
 
-`-cb` - I removed continous batching as it confronts with speculative decoding.
+`-cb` - I removed continous batching as it confronts with speculative decoding feature.
 
 ```bash
 #!/bin/bash
@@ -204,7 +204,7 @@ exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   --models-max 1 \
   --models-dir ${MY_DIR}/models \
   -fa on --no-mmap -ngl 99 --parallel 1 \
-  -t 8 -tb 16 --jinja --cache-reuse 12288 \
+  -t 4 -tb 8 --jinja --cache-reuse 12288 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -236,14 +236,15 @@ spec-type = ngram-map-k
 draft-max = 12
 spec-ngram-size-n = 5
 spec-ngram-size-m = 3
+lookup-cache-static = 4096
+lookup-cache-dynamic = 4096
 
 [qwen3-coder]
-model = /home/your-user-name/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
 batch-size = 4096
 ubatch-size = 768
 ctx-size = 196608
 cache-reuse = 12288
-ctx-checkpoints = 16
+ctx-checkpoints = 24
 swa-full = on
 slot-prompt-similarity = 0.85
 n-predict = 32768
@@ -258,12 +259,9 @@ cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 draft-max = 64
 spec-type = ngram-map-k
-spec-use-checkpoints = on
+#spec-use-checkpoints = on
 spec-ngram-size-n = 12
 spec-ngram-size-m = 8
-draft-max = 64
-lookup-cache-static = 4096
-lookup-cache-dynamic = 4096
 ```
 
 Now register your service
