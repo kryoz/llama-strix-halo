@@ -42,23 +42,12 @@ My benchmarks proved `amd_iommu=off` is better than `amd_iommu=pt`.
 GRUB_CMDLINE_LINUX_DEFAULT="amd_iommu=off amdgpu.gttsize=131072 ttm.pages_limit=33554432"
 ```
 
-Configure module with same numbers
-```
-sudo nano /etc/modprobe.d/amdgpu_llm_optimized.conf
-```
-```
-options amdgpu gttsize=129024
-options ttm pages_limit=33030144
-options ttm page_pool_size=33030144
-```
-
-Update initramfs and grub
+Update grub
 ```
 sudo update-grub
-sudo update-initramfs -u -k all
 ```
 
-Update udev rules
+Create udev rules
 ```
 sudo bash -c 'cat > /etc/udev/rules.d/99-amd-kfd.rules << EOF
    SUBSYSTEM=="kfd", GROUP="render", MODE="0666", OPTIONS+="last_rule"
