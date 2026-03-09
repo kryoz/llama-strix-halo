@@ -203,7 +203,7 @@ exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   --models-preset ${MY_DIR}/llama.ini \
   --models-max 1 \
   --models-dir ${MY_DIR}/models \
-  -fa on --no-mmap -ngl 99 --parallel 1 --no-kv-offload --defrag-thold 0.2 \
+  -fa on --no-mmap -ngl 99 --parallel 1 \
   -t 8 -tb 16 --jinja --cache-reuse 12288 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
@@ -220,8 +220,7 @@ model = /home/your-user-name/models/Qwen3-235b/Qwen3-235B-A22B-UD-Q3_K_XL-00001-
 batch-size = 2048
 ubatch-size = 512
 ctx-size = 120000
-#swa-full = on
-ctx-checkpoints = 32
+ctx-checkpoints = 16
 slot-prompt-similarity = 0.85
 n-predict = 32768
 temp = 0.3
@@ -234,19 +233,17 @@ cache-type-v = q4_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 spec-type = ngram-map-k
-draft-min = 8
-draft-max = 48
+draft-max = 12
 spec-ngram-size-n = 5
 spec-ngram-size-m = 3
-lookup-cache-static = 4096
-lookup-cache-dynamic = 4096
 
 [qwen3-coder]
 model = /home/your-user-name/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
 batch-size = 4096
 ubatch-size = 768
 ctx-size = 196608
-ctx-checkpoints = 64
+cache-reuse = 12288
+ctx-checkpoints = 16
 swa-full = on
 slot-prompt-similarity = 0.85
 n-predict = 32768
@@ -259,11 +256,12 @@ cache-type-k = q8_0
 cache-type-v = q8_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
+draft-max = 64
 spec-type = ngram-map-k
-spec-ngram-size-n = 5
-spec-ngram-size-m = 3
-draft-max = 24
-draft-min = 4
+spec-use-checkpoints = on
+spec-ngram-size-n = 12
+spec-ngram-size-m = 8
+draft-max = 64
 lookup-cache-static = 4096
 lookup-cache-dynamic = 4096
 ```
