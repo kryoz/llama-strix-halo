@@ -255,8 +255,8 @@ top-p = 0.95
 top-k = 40
 min-p = 0.01
 repeat-penalty = 1.1
-cache-type-k = q6_0
-cache-type-v = q6_0
+cache-type-k = q8_0
+cache-type-v = q8_0
 cache-type-k-draft = q4_0
 cache-type-v-draft = q4_0
 # actually spec decoding isn't supported by this hybrid model :(
