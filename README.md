@@ -246,7 +246,8 @@ min-p = 0.01
 repeat-penalty = 1.1
 cache-type-k = q4_0
 cache-type-v = q4_0
-draft-max = 16
+# acceptance rate 0.4-0.8, don't need to make more
+draft-max = 12
 spec-type = ngram-map-k
 #spec-use-checkpoints = on
 spec-ngram-size-n = 6
