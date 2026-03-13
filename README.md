@@ -2,8 +2,10 @@
 
 This note describes how to configure step by step local high-performance LLM setup with fresh install of Ubuntu Server 24.04 LTS and llama.cpp.
 
-Before you proceed you MUST configure BIOS settings in graphics section to dedicate MINIMUM amount of RAM to GPU in UMA_SPECIFIED section.
+Before you proceed **you MUST configure BIOS** settings in graphics section to dedicate MINIMUM amount of RAM to GPU in UMA_SPECIFIED section.
 Some systems allow to select 512Mb, some 2Gb.
+
+Also for more predictable CPU threads aligning disable SMT (hyper-threading).
 
 Login to your shell then let's install repo for the newest kernels
 ```bash
@@ -208,13 +210,13 @@ Create custom config for models
 nano ~/llama.ini
 ```
 
-My example of configuration. Take a note on highly optimized params for Qwen3 Coder Next (speculative decoding without providing draft model) 
+Here's example of my configuration. Take a note on highly optimized params for Qwen3 Coder Next (speculative decoding without providing draft model) 
 ```ini
 version = 1
 
 [*]
-threads = 6
-threads-batch = 6
+threads = 8
+threads-batch = 8
 flash-attn = on
 mlock = off
 mmap = off
@@ -231,8 +233,29 @@ cache-reuse = 4096
 cache-ram = 32768
 slot-prompt-similarity = 0.85
 
+[minimax]
+model = /home/your-user-name/models/MiniMax-M.25/IQ4_XS/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
+ctx-size = 150000
+cache-reuse = 8192
+ctx-checkpoints = 32
+n-predict = 16384
+temp = 1.0
+top-p = 0.95
+top-k = 40
+min-p = 0.01
+repeat-penalty = 1.1
+cache-type-k = q4_0
+cache-type-v = q4_0
+cache-type-k-draft = q4_0
+cache-type-v-draft = q4_0
+draft-max = 64
+spec-type = ngram-map-k
+#spec-use-checkpoints = on
+spec-ngram-size-n = 12
+spec-ngram-size-m = 8
+
 [qwen3.5]
-model = /home/akubintsev/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
+model = /home/your-user-name/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
 ctx-size = 180000
 cache-reuse = 8192
 ctx-checkpoints = 32
@@ -254,7 +277,7 @@ spec-ngram-size-n = 12
 spec-ngram-size-m = 8
 
 [qwen3-coder]
-model = /home/akubintsev/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
+model = /home/your-user-name/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
 ctx-size = 196608
 cache-reuse = 12288
 ctx-checkpoints = 32
@@ -275,6 +298,29 @@ spec-type = ngram-map-k
 #spec-use-checkpoints = on
 spec-ngram-size-n = 12
 spec-ngram-size-m = 8
+
+[GPT]
+model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
+ctx-size = 130000
+temp = 1.0
+min-p = 0.01
+cache-type-k = q8_0
+cache-type-v = q8_0
+
+[Qwen3-VL]
+model = /home/your-user-name/models/Qwen3-VL/Qwen3-VL-30B-A3B-Instruct-UD-Q8_K_XL.gguf
+mmproj = /home/akubintsev/models/mmproj-F16.gguf
+chat-template = chatml
+ctx-size = 32768
+min-p = 0.05
+top-k = 40
+top-p = 0.95
+temp = 0.2
+repeat-penalty = 1.05
+cache-type-k = q8_0
+cache-type-v = q8_0
+presence-penalty = 0
+image-min-tokens = 1024
 ```
 
 Now register your service
