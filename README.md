@@ -214,7 +214,6 @@ version = 1
 
 [*]
 threads = 8
-# prompt processing depends on this when there's no GPU offload
 threads-batch = 8
 flash-attn = on
 mlock = off
@@ -226,6 +225,7 @@ ubatch-size = 768
 cache-type-k = q8_0
 cache-type-v = q8_0
 jinja = true
+chat-template = chatml
 direct-io = on
 cache-prompt = true
 cache-reuse = 4096
@@ -233,8 +233,9 @@ cache-ram = 32768
 slot-prompt-similarity = 0.85
 
 [minimax]
-model = /home/your-user-name/models/MiniMax-M.25/IQ4_XS/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
-ctx-size = 150000
+model = /home/akubintsev/models/MiniMax-M2.5/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
+ctx-size = 65536
+batch-size = 1536
 cache-reuse = 8192
 ctx-checkpoints = 32
 n-predict = 16384
@@ -245,8 +246,9 @@ min-p = 0.01
 repeat-penalty = 1.1
 cache-type-k = q4_0
 cache-type-v = q4_0
-# acceptance rate 0.4-0.8, don't need to make more
+draft-p-min = 0.8
 draft-max = 12
+draft-min = 6
 spec-type = ngram-map-k
 #spec-use-checkpoints = on
 spec-ngram-size-n = 6
