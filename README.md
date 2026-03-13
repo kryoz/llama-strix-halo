@@ -7,7 +7,7 @@ Some systems allow to select 512Mb, some 2Gb.
 
 Also for more predictable CPU threads aligning by `numactl` - **disable SMT (hyper-threading)**.
 
-Login to your shell then let's install repo for the newest kernels
+Login to your shell then let's install repo for the newest kernel.
 ```bash
 sudo add-apt-repository ppa:cappelikan/ppa -y
 sudo apt update
@@ -162,13 +162,11 @@ nano ~/llama-starter.sh
 ```
 
 
-
 Next script will configure llama.cpp to load models dynamically which were found at dir `~/models`.
 
 I tuned params to handle at agents workflow as fast as it can be.
 
-`numactl --cpunodebind=0 --membind=0 ` - binds to CPU CCD 0 and `-tb 6` specifies use all threads on that CCD. 
-"Threads batch" is for prompt processing. It utilizes CPU. 
+`numactl --cpunodebind=0 --membind=0 ` - binds to CPU CCD 0 (to use all threads on that CCD and its L2 Cache). 
 
 Note! You must install it manually **in the container**:
 ```
@@ -216,6 +214,7 @@ version = 1
 
 [*]
 threads = 8
+# prompt processing depends on this when there's no GPU offload
 threads-batch = 8
 flash-attn = on
 mlock = off
