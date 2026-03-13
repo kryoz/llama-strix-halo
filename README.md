@@ -2,10 +2,10 @@
 
 This note describes how to configure step by step local high-performance LLM setup with fresh install of Ubuntu Server 24.04 LTS and llama.cpp.
 
-Before you proceed **you MUST configure BIOS** settings in graphics section to dedicate MINIMUM amount of RAM to GPU in UMA_SPECIFIED section.
+Before you proceed **you MUST configure BIOS** settings in graphics section to dedicate **MINIMUM** amount of RAM to GPU in UMA_SPECIFIED section.
 Some systems allow to select 512Mb, some 2Gb.
 
-Also for more predictable CPU threads aligning disable SMT (hyper-threading).
+Also for more predictable CPU threads aligning by `numactl` - **disable SMT (hyper-threading)**.
 
 Login to your shell then let's install repo for the newest kernels
 ```bash
@@ -246,13 +246,11 @@ min-p = 0.01
 repeat-penalty = 1.1
 cache-type-k = q4_0
 cache-type-v = q4_0
-cache-type-k-draft = q4_0
-cache-type-v-draft = q4_0
-draft-max = 64
+draft-max = 16
 spec-type = ngram-map-k
 #spec-use-checkpoints = on
-spec-ngram-size-n = 12
-spec-ngram-size-m = 8
+spec-ngram-size-n = 6
+spec-ngram-size-m = 4
 
 [qwen3.5]
 model = /home/your-user-name/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
@@ -268,8 +266,6 @@ min-p = 0.01
 repeat-penalty = 1.1
 cache-type-k = q4_0
 cache-type-v = q4_0
-cache-type-k-draft = q4_0
-cache-type-v-draft = q4_0
 draft-max = 64
 spec-type = ngram-map-k
 #spec-use-checkpoints = on
@@ -291,8 +287,6 @@ repeat-penalty = 1.1
 presence-penalty = 1.5
 cache-type-k = q8_0
 cache-type-v = q8_0
-cache-type-k-draft = q4_0
-cache-type-v-draft = q4_0
 draft-max = 64
 spec-type = ngram-map-k
 #spec-use-checkpoints = on
