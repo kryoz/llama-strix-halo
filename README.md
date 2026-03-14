@@ -342,7 +342,90 @@ I hope it helped you.
 
 Also my credits to https://github.com/Gygeek/Framework-strix-halo-llm-setup 
 
-P.S. Llama.cpp buid tips. Actually performance was much worse than on `rocm7-nightlies` builds
+# Bonus part
+
+## Ryzenadj
+
+You can tweak power balance by famous utility `ryzenadj`.
+It can safely decrease CPU power consumption freeing TDP room for GPU core.
+
+Here's the guideline. 
+```bash
+# You may need a fresh toolchain for the kernel
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo apt update
+sudo apt install gcc-15 g++-15 cmake build-essential libpci-dev
+
+# Install forked module ryzen_smu for strix-halo
+git clone https://github.com/amkillam/ryzen_smu
+cd ryzen_smu && sudo make dkms-install
+
+# Status check
+sudo dkms status ryzen_smu
+
+# If ok - load module
+sudo modprobe ryzen_smu
+
+# Install permanently
+echo "ryzen_smu" | sudo tee /etc/modules-load.d/ryzen_smu.conf
+```
+
+On GMKtec Evo X2 thermal limit was at 98 which is abnormally high. I changed to 85 which is enough especially if thermal interface was replaced to graphen pad.
+
+Also GPU TDP limit was increased from 70W to 90W.
+
+CPU cores was set to proven safe -20mV. 
+Here's the map:
+| mV | hex |
+|----|-----| 
+| 00x00000 | -10 |
+| 0xFFFF6 | -20 |
+| 0xFFFEC | -30 |
+| 0xFFFE2 | -40 |
+| 0xFFFF8 | -50 |
+| 0xFFFF0 | instabilty risk |
+
+One time set
+```bash
+sudo ryzenadj \
+  --stapm-limit=120000 \
+  --fast-limit=140000 \
+  --slow-limit=120000 \
+  --apu-slow-limit=90000 \
+  --tctl-temp=85 \
+  --set-coall=0xFFFEC
+```
+
+Permanent set as service:
+```bash
+sudo nano /etc/systemd/system/ryzenadj.service
+```
+
+```ini
+[Unit]
+Description=RyzenAdj power settings
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ryzenadj --stapm-limit=120000 --fast-limit=140000 --slow-limit=120000 --apu-slow-limit=90000 --tctl-temp=85 --set-coall=0xFFFEC
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+```
+And enable it:
+```bash
+sudo systemctl enable --now ryzenadj.service
+systemctl daemon-reload
+# check
+sudo systemctl status ryzenadj.service
+```
+
+## Llama.cpp buid tips. 
+Actually performance was much worse than at `rocm7-nightlies` builds. 
+But it may have sense to add optimization flags inside toolbox'es Dockerfile.
+
 ```bash
 # Add AMD ROCm repository
 wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | sudo apt-key add -
