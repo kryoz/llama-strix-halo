@@ -233,7 +233,8 @@ direct-io = on
 ctx-checkpoints = 20
 cache-prompt = true
 cache-reuse = 4096
-cache-ram = 32768
+# Careful! +8Gb of RAM utilization
+cache-ram = 8192
 slot-prompt-similarity = 0.85
 
 [minimax]
@@ -242,11 +243,12 @@ slot-prompt-similarity = 0.85
 # These params help to avoid OOM
 model = /home/your-user-name/models/MiniMax-M2.5/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
 chat-template =
+ctx-checkpoints = 8
 ubatch-size = 768
 batch-size  = 3072
 cache-type-k = q4_0
 cache-type-v = q4_0
-ctx-size = 32768
+ctx-size = 50000
 slot-prompt-similarity = 0.9
 n-predict = 16384
 temp = 0.5
