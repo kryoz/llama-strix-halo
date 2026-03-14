@@ -421,8 +421,38 @@ systemctl daemon-reload
 # check
 sudo systemctl status ryzenadj.service
 ```
+# GMKTec Evo X2 BIOS 1.12 and minimal VRAM of 2Gb
 
-## Llama.cpp buid tips. 
+If you've got this miniPC you probably was annoyed by minimal UMA setting of 2Gb RAM. Mine was shipped with this version of BIOS.
+
+In prev versions of the firmware there was even 512M so it's about 1.5Gb of RAM which has become unusable.
+
+At first I tried to flash 1.05 but without any success. As I understood the manufacturer has changed the flash method and I DO NOT RECOMMEND EVEN TO ATTEMPT to flash it.
+
+Eventually appeared thayt v1.11 is enough.
+
+Visit https://strixhalo.wiki/Hardware/Boards/Sixunited_AXB35/Firmware to download the archive. If you have Windows installed - you can handle with ease :)
+If not here's a recipe.
+1. You need USB stick and EFI shell like this https://sourceforge.net/projects/cloverefiboot/
+2. Install Clover of the formatted USB stick
+3. Copy contents of `ROM` and `Shell` directories of the firmware archive to the root of USB
+4. Reboot and choose to boot from USB
+5. Select EFI Shell in the Clover UI
+6. At the shell select USB drive with command `FS1:` or `FS0:`
+7. Lookup a command for flashing in the .nsh script like `cat AfiFlash.nsh`
+8. Type the command  (mine was `AfuEfix64.efi AXB3502111.bin /p /b /n /r /k /l /x /capsule /q` )
+9. Don't touch anything and pray :) Very scary part really.
+10. No, it's not all over :) After all is done goto BIOS and reset all settings to default.
+11. Reboot and goto BIOS again. Now you can select UMA 1Gb.
+12. We can do better :) After applying and reboot return to BIOS.
+13. Hit Alt+F5. You'll be notified about enabling debug settings. If 2nd Advanced tab didn't appear save and reboot again
+14. In the 2nd Advanced tab look for GFX settings. I don't recommend to change anything else by the way.
+15. Select 0.5Gb at last and save the settings.
+16. Congratulations!
+
+
+
+## Llama.cpp buid tips
 Actually performance was much worse than at `rocm7-nightlies` builds. 
 But it may have sense to add optimization flags inside toolbox'es Dockerfile.
 
