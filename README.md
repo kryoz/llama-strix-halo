@@ -193,6 +193,9 @@ nano ~/llama-starter.sh
 
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 export MY_DIR=/home/your-user-name
+export GGML_HIP_FORCE_MMQ=1
+export GGML_HIP_MAX_BATCH_SIZE=4096
+export GGML_HIP_NO_PINNED=1
 
 exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   numactl --cpunodebind=0 --membind=0 llama-server \
@@ -227,28 +230,34 @@ cache-type-k = q8_0
 cache-type-v = q8_0
 jinja = true
 direct-io = on
+ctx-checkpoints = 20
 cache-prompt = true
 cache-reuse = 4096
 cache-ram = 32768
 slot-prompt-similarity = 0.85
 
 [minimax]
-# This model works badly with draft
-model = /home/akubintsev/models/MiniMax-M2.5/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
+# AesSedai/MiniMax-M2.5
+# This model works badly with draft and works on the edge of 128Gb RAM
+# These params help to avoid OOM
+model = /home/your-user-name/models/MiniMax-M2.5/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
 chat-template =
-ctx-size = 65536
+ubatch-size = 768
+batch-size  = 3072
+cache-type-k = q4_0
+cache-type-v = q4_0
+ctx-size = 32768
 slot-prompt-similarity = 0.9
-ctx-checkpoints = 32
 n-predict = 16384
-temp = 0.4
+temp = 0.5
 top-p = 0.95
 top-k = 40
 min-p = 0.01
 repeat-penalty = 1.1
 
 [qwen3.5]
-model = /home/akubintsev/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
-ctx-size = 65536
+model = /home/your-user-name/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
+ctx-size = 32768
 cache-reuse = 8192
 ctx-checkpoints = 32
 swa-full = on
@@ -270,10 +279,9 @@ draft-min = 6
 draft-max = 16
 
 [qwen3-coder]
-model = /home/akubintsev/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
+model = /home/your-user-name/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
 ctx-size = 196608
-cache-reuse = 12288
-ctx-checkpoints = 32
+cache-reuse = 9182
 swa-full = on
 n-predict = 16384
 temp = 1.0
