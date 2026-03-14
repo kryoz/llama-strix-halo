@@ -218,14 +218,14 @@ threads-batch = 8
 flash-attn = on
 mlock = off
 mmap = off
+split-mode = none
 fit = off
 warmup = off
-batch-size = 3072
-ubatch-size = 768
+ubatch-size = 1536
+batch-size  = 6144
 cache-type-k = q8_0
 cache-type-v = q8_0
 jinja = true
-chat-template = chatml
 direct-io = on
 cache-prompt = true
 cache-reuse = 4096
@@ -233,30 +233,21 @@ cache-ram = 32768
 slot-prompt-similarity = 0.85
 
 [minimax]
-model = /home/your-user-name/models/MiniMax-M2.5/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
+# This model works badly with draft
+model = /home/akubintsev/models/MiniMax-M2.5/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
+chat-template =
 ctx-size = 65536
-batch-size = 1536
-cache-reuse = 8192
+slot-prompt-similarity = 0.9
 ctx-checkpoints = 32
 n-predict = 16384
-temp = 1.0
+temp = 0.4
 top-p = 0.95
 top-k = 40
 min-p = 0.01
 repeat-penalty = 1.1
-cache-type-k = q4_0
-cache-type-v = q4_0
-spec-type = ngram-map-k
-#spec-use-checkpoints = on
-spec-ngram-size-n = 6
-spec-ngram-size-m = 4
-# maybe you should tune this params to achieve acceptance to range of 0.6~0.0.9
-draft-p-min = 0.8
-draft-max = 12
-draft-min = 6
 
 [qwen3.5]
-model = /home/your-user-name/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
+model = /home/akubintsev/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
 ctx-size = 65536
 cache-reuse = 8192
 ctx-checkpoints = 32
@@ -279,7 +270,7 @@ draft-min = 6
 draft-max = 16
 
 [qwen3-coder]
-model = /home/your-user-name/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
+model = /home/akubintsev/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
 ctx-size = 196608
 cache-reuse = 12288
 ctx-checkpoints = 32
