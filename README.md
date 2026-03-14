@@ -423,13 +423,13 @@ sudo systemctl status ryzenadj.service
 ```
 # GMKTec Evo X2 BIOS 1.12 and minimal VRAM of 2Gb
 
-If you've got this miniPC you probably was annoyed by minimal UMA setting of 2Gb RAM. Mine was shipped with this version of BIOS.
+If you've got this miniPC with v1.12 BIOS you probably was annoyed by minimum of UMA setting 2Gb RAM.
 
 In prev versions of the firmware there was even 512M so it's about 1.5Gb of RAM which has become unusable.
 
 At first I tried to flash 1.05 but without any success. As I understood the manufacturer has changed the flash method and I DO NOT RECOMMEND EVEN TO ATTEMPT to flash it.
 
-Eventually appeared thayt v1.11 is enough.
+Eventually appeared that v1.11 is good enough.
 
 Visit https://strixhalo.wiki/Hardware/Boards/Sixunited_AXB35/Firmware to download the archive. If you have Windows installed - you can handle with ease :)
 If not here's a recipe.
@@ -439,8 +439,8 @@ If not here's a recipe.
 4. Reboot and choose to boot from USB
 5. Select EFI Shell in the Clover UI
 6. At the shell select USB drive with command `FS1:` or `FS0:`
-7. Lookup a command for flashing in the .nsh script like `cat AfiFlash.nsh`
-8. Type the command  (mine was `AfuEfix64.efi AXB3502111.bin /p /b /n /r /k /l /x /capsule /q` )
+7. Lookup a command for flashing in the .nsh script like `cat AXB35-02_BIOS_UpdateEFI.nsh`
+8. Type the command to run (mine was `AfuEfix64.efi AXB3502111.bin /p /b /n /r /k /l /x /capsule /q` )
 9. Don't touch anything and pray :) Very scary part really.
 10. No, it's not all over :) After all is done goto BIOS and reset all settings to default.
 11. Reboot and goto BIOS again. Now you can select UMA 1Gb.
