@@ -181,7 +181,7 @@ Using all CPUs CCDs makes less efficient job processing due to concurrent memory
 
 `--parallel 1` - max 1 requests processed at once. Available ctx-size divides by this param.
 
-`-cb` - I removed continous batching as it confronts with speculative decoding feature.
+`-cb` -  continous batching, confronts with speculative decoding feature.
 
 
 Paste and modify again `your-user-name`.
@@ -196,6 +196,8 @@ export MY_DIR=/home/your-user-name
 export GGML_HIP_FORCE_MMQ=1
 export GGML_HIP_MAX_BATCH_SIZE=4096
 export GGML_HIP_NO_PINNED=1
+# allow 30 min for slow long prompt processing step
+export LLAMA_ARG_TIMEOUT=1800
 
 exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   numactl --cpunodebind=0 --membind=0 llama-server \
@@ -224,8 +226,8 @@ mmap = off
 split-mode = none
 fit = off
 warmup = off
-ubatch-size = 1536
-batch-size  = 6144
+ubatch-size = 768
+batch-size  = 3072
 cache-type-k = q8_0
 cache-type-v = q8_0
 jinja = true
@@ -233,97 +235,75 @@ direct-io = on
 ctx-checkpoints = 20
 cache-prompt = true
 cache-reuse = 4096
-# Careful! +8Gb of RAM utilization
-cache-ram = 8192
+# 4Gb of RAM
+cache-ram = 4096
 slot-prompt-similarity = 0.85
+top-k = 40
 
 [minimax]
-# AesSedai/MiniMax-M2.5
 # This model works badly with draft and works on the edge of 128Gb RAM
 # These params help to avoid OOM
-model = /home/your-user-name/models/MiniMax-M2.5/MiniMax-M2.5-IQ4_XS-00001-of-00004.gguf
-chat-template =
-ctx-checkpoints = 8
+model = /home/your-user-name/models/MiniMax-M2.5/UDQ3/MiniMax-M2.5-UD-Q3_K_XL-00001-of-00004.gguf
+reasoning-format = deepseek
+# certainly faster than 1024/4096 about 1.5x
 ubatch-size = 768
 batch-size  = 3072
-cache-type-k = q4_0
-cache-type-v = q4_0
-ctx-size = 50000
-slot-prompt-similarity = 0.9
+repeat-last-n = 512
+ctx-checkpoints = 15
+ctx-size = 120000
+repeat-penalty = 1.05
 n-predict = 16384
-temp = 0.5
+temp = 0.4
 top-p = 0.95
-top-k = 40
-min-p = 0.01
-repeat-penalty = 1.1
+min-p = 0.00
 
 [qwen3.5]
 model = /home/your-user-name/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
-ctx-size = 32768
-cache-reuse = 8192
-ctx-checkpoints = 32
+reasoning-format = deepseek
+chat-template-kwargs = {"enable_thinking":false}
+chat-template-file = /home/akubintsev/models/qwen3_nonthinking.jinja
 swa-full = on
+ctx-size = 150000
+ctx-checkpoints = 20
 n-predict = 16384
-temp = 1.0
+repeat-last-n = 512
+temp = 0.7
 top-p = 0.95
-top-k = 40
-min-p = 0.01
+min-p = 0.00
+presence-penalty = 2.0
 repeat-penalty = 1.1
-cache-type-k = q4_0
-cache-type-v = q4_0
-spec-type = ngram-map-k
-#spec-use-checkpoints = on
-spec-ngram-size-n = 6
-spec-ngram-size-m = 4
-# maybe you should tune this params to achieve acceptance to range of 0.6~0.0.9
-draft-p-min = 0.8
-draft-min = 6
-draft-max = 16
 
 [qwen3-coder]
 model = /home/your-user-name/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
 ctx-size = 196608
-cache-reuse = 9182
 swa-full = on
 n-predict = 16384
-temp = 1.0
+repeat-last-n = 512
+temp = 0.8
 top-p = 0.95
 top-k = 40
 min-p = 0.01
 repeat-penalty = 1.1
 presence-penalty = 1.5
-cache-type-k = q8_0
-cache-type-v = q8_0
 spec-type = ngram-map-k
 #spec-use-checkpoints = on
-spec-ngram-size-n = 8
-spec-ngram-size-m = 6
 # maybe you should tune this params to achieve acceptance to range of 0.6~0.0.9
 draft-max = 48
 draft-p-min = 0.8
 
 [GPT]
 model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
-ctx-size = 130000
-temp = 1.0
+reasoning-format = deepseek
+chat-template-kwargs = {"reasoning_effort": "high"}
+ctx-size = 131072
+ctx-checkpoints = 20
+swa-full = on
+temp = 0.3
 min-p = 0.01
-cache-type-k = q8_0
-cache-type-v = q8_0
-
-[Qwen3-VL]
-model = /home/your-user-name/models/Qwen3-VL/Qwen3-VL-30B-A3B-Instruct-UD-Q8_K_XL.gguf
-mmproj = /home/akubintsev/models/mmproj-F16.gguf
-chat-template = chatml
-ctx-size = 32768
-min-p = 0.05
-top-k = 40
 top-p = 0.95
-temp = 0.2
+presence-penalty = 2.0
 repeat-penalty = 1.05
-cache-type-k = q8_0
-cache-type-v = q8_0
-presence-penalty = 0
-image-min-tokens = 1024
+
 ```
 
 Now register your service
@@ -392,7 +372,7 @@ sudo ryzenadj \
   --fast-limit=140000 \
   --slow-limit=120000 \
   --apu-slow-limit=90000 \
-  --tctl-temp=85 \
+  --tctl-temp=88 \
   --set-coall=0xFFFEC
 ```
 
@@ -408,7 +388,7 @@ After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/ryzenadj --stapm-limit=120000 --fast-limit=140000 --slow-limit=120000 --apu-slow-limit=90000 --tctl-temp=85 --set-coall=0xFFFEC
+ExecStart=/usr/local/bin/ryzenadj --stapm-limit=120000 --fast-limit=140000 --slow-limit=120000 --apu-slow-limit=90000 --tctl-temp=88 --set-coall=0xFFFEC
 RemainAfterExit=yes
 
 [Install]
