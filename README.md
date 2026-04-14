@@ -27,9 +27,9 @@ Find latest stable kernel
 sudo mainline --list | grep "6.1[6-9]\|6.2"
 ```
 
-For example 6.18.6
+6.19.* at the moment had issues. I recommend 6.18.*, for example 6.18.20
 ```
-sudo mainline --install 6.18.6
+sudo mainline --install 6.18.20
 ```
 
 Edit kernel startup params
@@ -200,11 +200,11 @@ export GGML_HIP_NO_PINNED=1
 export LLAMA_ARG_TIMEOUT=1800
 
 exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
-  numactl --cpunodebind=0 --membind=0 llama-server \
+  numactl --cpunodebind=0 --membind=0 llama-server --numa numactl \
   --models-preset ${MY_DIR}/llama.ini \
   --models-max 1 \
   --models-dir ${MY_DIR}/models \
-  -ngl 999 --parallel 1 \
+  -ngl 999 --parallel 1 -np 8 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -228,15 +228,14 @@ fit = off
 warmup = off
 ubatch-size = 768
 batch-size  = 3072
+# high quants have tiny benefits; lower work badly on ROCm though cache-v = q5_1 would be nice for RAM saving
 cache-type-k = q8_0
 cache-type-v = q8_0
 jinja = true
 direct-io = on
 ctx-checkpoints = 20
 cache-prompt = true
-cache-reuse = 4096
-# 4Gb of RAM
-cache-ram = 4096
+cache-reuse = 1024
 slot-prompt-similarity = 0.85
 top-k = 40
 
@@ -245,17 +244,15 @@ top-k = 40
 # These params help to avoid OOM
 model = /home/your-user-name/models/MiniMax-M2.5/UDQ3/MiniMax-M2.5-UD-Q3_K_XL-00001-of-00004.gguf
 reasoning-format = deepseek
-# certainly faster than 1024/4096 about 1.5x
-ubatch-size = 768
-batch-size  = 3072
+reasoning = on
 repeat-last-n = 512
 ctx-checkpoints = 15
-ctx-size = 120000
+ctx-size = 53000
 repeat-penalty = 1.05
 n-predict = 16384
-temp = 0.4
+temp = 0.15
 top-p = 0.95
-min-p = 0.00
+min-p = 0.01
 
 [qwen3.5]
 model = /home/your-user-name/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
