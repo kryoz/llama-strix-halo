@@ -52,10 +52,10 @@ sudo update-grub
 Create udev rules
 ```
 sudo bash -c 'cat > /etc/udev/rules.d/99-amd-kfd.rules << EOF
-   SUBSYSTEM=="kfd", GROUP="render", MODE="0666", OPTIONS+="last_rule"
-   SUBSYSTEM=="drm", KERNEL=="card[0-9]*", GROUP="render", MODE="0666", OPTIONS+="last_rule"
-   SUBSYSTEM=="drm", KERNEL=="renderD[0-9]*", GROUP="render", MODE="0666", OPTIONS+="last_rule"
-   EOF'
+SUBSYSTEM=="kfd", GROUP="render", MODE="0666", OPTIONS+="last_rule"
+SUBSYSTEM=="drm", KERNEL=="card[0-9]*", GROUP="render", MODE="0666", OPTIONS+="last_rule"
+SUBSYSTEM=="drm", KERNEL=="renderD[0-9]*", GROUP="render", MODE="0666", OPTIONS+="last_rule"
+EOF'
 
 sudo udevadm control --reload-rules
 sudo udevadm trigger
@@ -300,7 +300,6 @@ min-p = 0.01
 top-p = 0.95
 presence-penalty = 2.0
 repeat-penalty = 1.05
-
 ```
 
 Now register your service
@@ -343,11 +342,20 @@ sudo dkms status ryzen_smu
 # If ok - load module
 sudo modprobe ryzen_smu
 
-# Install permanently
+# Install module permanently
 echo "ryzen_smu" | sudo tee /etc/modules-load.d/ryzen_smu.conf
+
+# Install ryzenadj utility
+git clone https://github.com/FlyGoat/RyzenAdj.git
+cd RyzenAdj
+rm -r win32
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+sudo cp ryzenadj /usr/local/bin
 ```
 
-On GMKtec Evo X2 thermal limit was at 98 which is abnormally high. I changed to 85 which is enough especially if thermal interface was replaced to graphen pad.
+On GMKtec Evo X2 thermal limit was at 98 which is abnormally high. I changed to 87 which is enough especially if thermal interface was replaced to graphen pad.
 
 Also GPU TDP limit was increased from 70W to 90W.
 
@@ -385,7 +393,7 @@ After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/ryzenadj --stapm-limit=120000 --fast-limit=140000 --slow-limit=120000 --apu-slow-limit=90000 --tctl-temp=88 --set-coall=0xFFFEC
+ExecStart=/usr/local/bin/ryzenadj --stapm-limit=120000 --fast-limit=140000 --slow-limit=120000 --apu-slow-limit=90000 --tctl-temp=87 --set-coall=0xFFFEC
 RemainAfterExit=yes
 
 [Install]
