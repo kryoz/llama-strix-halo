@@ -412,7 +412,11 @@ If you've got this miniPC with v1.12 BIOS you probably was annoyed by minimum of
 
 In prev versions of the firmware there was even 512M so it's about 1.5Gb of RAM which has become unusable.
 
-At first I tried to flash 1.05 but without any success. As I understood the manufacturer has changed the flash method and I DO NOT RECOMMEND EVEN TO ATTEMPT to flash it.
+---
+**!!!DO NOT EVEN TRY TO FLASH v1.05 IF YOU HAD v1.12 FROM FACTORY!!!**
+
+There are 2 versions of 1.05. One cannot flash. The another bricked my BIOS chip and even specialized flasher tool couldn't recover it!
+---
 
 Eventually appeared that v1.11 is good enough.
 
@@ -435,31 +439,14 @@ If not here's a recipe.
 15. Select 0.5Gb at last and save the settings.
 16. Congratulations!
 
+UPDATE: Setting to 512Mb worked only once for me :(
 
+# USB4/Thunderbolt/RDMA breakthrough for lowest latency
 
-## Llama.cpp buid tips
-Actually performance was much worse than at `rocm7-nightlies` builds. 
-But it may have sense to add optimization flags inside toolbox'es Dockerfile.
+Refer to drivers https://github.com/Geramy/OdinLink-Five.
+
+The only issue was about default `ring_size=4096` which is too high. Try with `1024`
 
 ```bash
-# Add AMD ROCm repository
-wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | sudo apt-key add -
-echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/latest ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list
-
-sudo apt update
-sudo apt install rocm-hip-runtime rocm-hip-sdk -y
-
-export ROCM_PATH=/opt/rocm
-# gfx1151
-export HSA_OVERRIDE_GFX_VERSION="11.5.1"
-export PATH=$PATH:$ROCM_PATH/bin 
-export LD_LIBRARY_PATH="$ROCM_PATH/lib $ROCM_PATH/lib64 $LD_LIBRARY_PATH"
-export HIPCC_FLAGS="--amdgpu-target=gfx1151 --hip-link-llvm-bitcode"
-
-# Clone llama.cpp sources
-git clone https://github.com/ggerganov/llama.cpp --depth 1
-
-# build
-cd llama.cpp
-cmake -B build . -DCMAKE_CXX_FLAGS="-march=native -Ofast -DNDEBUG" -DCMAKE_C_FLAGS="-march=native -Ofast -DNDEBUG" -DGGML_HIP=ON -DAMDGPU_TARGETS="gfx1151" -DGGML_AVX512=ON -DGGML_AVX2=ON -DGGML_AVX=ON -DGGML_AVX512_VBMI=ON -DGGML_AVX512_VNNI=ON -DGGML_AVX512_BF16=ON -DGGML_NATIVE=OFF -DGGML_FMA=ON -DGGML_F16C=ON -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j$(nproc)
+sudo insmod driver/odl_tb5.ko odl_ring_size=1024
+```
