@@ -443,10 +443,24 @@ UPDATE: Setting to 512Mb worked only once for me :(
 
 # USB4/Thunderbolt/RDMA breakthrough for lowest latency
 
-Refer to drivers https://github.com/Geramy/OdinLink-Five.
+Refer to drivers https://github.com/Geramy/OdinLink-Five
+
+Before checking connect your two nodes with USB4/TB4/5 cable.
 
 The only issue was about default `ring_size=4096` which is too high. Try with `1024`
 
 ```bash
 sudo insmod driver/odl_tb5.ko odl_ring_size=1024
+# Verify
+lsmod | grep odl_tb5
+# also check logs upon init
+sudo dmesg
+```
+
+Installation steps for permanent usage after the successful build and assuming you're in `OdinLink-Five` directory:
+
+```bash
+echo "odl_tb5" | sudo tee /etc/modules-load.d/odl_tb5.conf
+sudo cp driver/odl_tb5.ko /lib/modules/$(uname -r)/kernel/drivers/
+sudo depmod -a
 ```
