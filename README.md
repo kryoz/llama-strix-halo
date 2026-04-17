@@ -194,7 +194,7 @@ nano ~/llama-starter.sh
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 export MY_DIR=/home/your-user-name
 export GGML_HIP_FORCE_MMQ=1
-export GGML_HIP_MAX_BATCH_SIZE=4096
+export GGML_HIP_MAX_BATCH_SIZE=2048
 export GGML_HIP_NO_PINNED=1
 # allow 30 min for slow long prompt processing step
 export LLAMA_ARG_TIMEOUT=1800
@@ -204,7 +204,7 @@ exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   --models-preset ${MY_DIR}/llama.ini \
   --models-max 1 \
   --models-dir ${MY_DIR}/models \
-  -ngl 999 --parallel 1 -np 8 \
+  -ngl 999 --parallel 1 -np 2 \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
