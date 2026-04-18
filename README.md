@@ -1,5 +1,7 @@
 # Setup llama.cpp server on AMD Strix Halo 128Gb version
 
+## Initial setup
+
 This note describes how to configure step by step local high-performance LLM setup with fresh install of Ubuntu Server 24.04 LTS and llama.cpp.
 
 Before you proceed **you MUST configure BIOS** settings in graphics section to dedicate **MINIMUM** amount of RAM to GPU in UMA_SPECIFIED section.
@@ -41,7 +43,7 @@ This params allow to allocate all available shared memory to GPU.
 
 My benchmarks proved `amd_iommu=off` is better than `amd_iommu=pt`.
 ```
-GRUB_CMDLINE_LINUX_DEFAULT="amd_iommu=off amdgpu.gttsize=131072 ttm.pages_limit=33554432"
+GRUB_CMDLINE_LINUX_DEFAULT="amd_iommu=off amdgpu.gttsize=126976 ttm.pages_limit=32505856 ttm.page_pool_size=32505856"
 ```
 
 Update grub
@@ -181,7 +183,7 @@ Using all CPUs CCDs makes less efficient job processing due to concurrent memory
 
 `--parallel 1` - max 1 requests processed at once. Available ctx-size divides by this param.
 
-`-cb` -  continous batching, confronts with speculative decoding feature.
+Don't use without specific needs `-cb` -  continous batching, it confronts with speculative decoding feature.
 
 
 Paste and modify again `your-user-name`.
@@ -193,6 +195,8 @@ nano ~/llama-starter.sh
 
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 export MY_DIR=/home/your-user-name
+
+export GGML_HIP_NO_VMM=1
 export GGML_HIP_FORCE_MMQ=1
 export GGML_HIP_MAX_BATCH_SIZE=2048
 export GGML_HIP_NO_PINNED=1
@@ -226,8 +230,9 @@ mmap = off
 split-mode = none
 fit = off
 warmup = off
-ubatch-size = 768
-batch-size  = 3072
+# Generally ubatch-size of 2048 is optimal for gfx1151
+ubatch-size = 2048
+batch-size  = 4096
 # high quants have tiny benefits; lower work badly on ROCm though cache-v = q5_1 would be nice for RAM saving
 cache-type-k = q8_0
 cache-type-v = q8_0
@@ -245,12 +250,16 @@ top-k = 40
 model = /home/your-user-name/models/MiniMax-M2.5/UDQ3/MiniMax-M2.5-UD-Q3_K_XL-00001-of-00004.gguf
 reasoning-format = deepseek
 reasoning = on
+# probably more optimal for this model
+ubatch-size = 1536
+batch-size  = 3072
+#
 repeat-last-n = 512
 ctx-checkpoints = 15
 ctx-size = 53000
 repeat-penalty = 1.05
 n-predict = 16384
-temp = 0.15
+temp = 0.8
 top-p = 0.95
 min-p = 0.01
 
@@ -317,6 +326,8 @@ journalctl --user -u llama -f -n 100
 I hope it helped you.
 
 Also my credits to https://github.com/Gygeek/Framework-strix-halo-llm-setup 
+
+---
 
 # Bonus part
 
@@ -412,13 +423,14 @@ If you've got this miniPC with v1.12 BIOS you probably was annoyed by minimum of
 
 In prev versions of the firmware there was even 512M so it's about 1.5Gb of RAM which has become unusable.
 
+You can examine list of firmwares [here](https://strixhalo.wiki/Hardware/Boards/Sixunited_AXB35/Firmware)
 ---
 **!!!DO NOT EVEN TRY TO FLASH v1.05 IF YOU HAD v1.12 FROM FACTORY!!!**
 
-There are 2 versions of 1.05. One cannot flash. The another bricked my BIOS chip and even specialized flasher tool couldn't recover it!
+There are 2 versions of 1.05. One cannot be flashed. The another bricked my BIOS chip and even specialized flasher tool couldn't recover it!
 ---
 
-Eventually appeared that v1.11 is good enough.
+Eventually appeared that **v1.11** is good enough.
 
 Visit https://strixhalo.wiki/Hardware/Boards/Sixunited_AXB35/Firmware to download the archive. If you have Windows installed - you can handle with ease :)
 If not here's a recipe.
@@ -441,23 +453,25 @@ If not here's a recipe.
 
 UPDATE: Setting to 512Mb worked only once for me :(
 
+---
+
 # USB4/Thunderbolt/RDMA breakthrough for lowest latency
 
-Refer to drivers https://github.com/Geramy/OdinLink-Five
+Refer to drivers [OdinLink-Five](https://github.com/Geramy/OdinLink-Five), follow a building guide.
 
-Before checking connect your two nodes with USB4/TB4/5 cable.
+Before probing boot your two nodes with USB4/TB4/5 cable connected.
 
-The only issue was about default `ring_size=4096` which is too high. Try with `1024`
+The only issue was about default `odl_ring_size=4096` which is too high. Try with `odl_ring_size=1024`
 
 ```bash
 sudo insmod driver/odl_tb5.ko odl_ring_size=1024
 # Verify
 lsmod | grep odl_tb5
-# also check logs upon init
+# Also check logs upon init
 sudo dmesg
 ```
 
-Installation steps for permanent usage after the successful build and assuming you're in `OdinLink-Five` directory:
+Installation steps for permanent usage after the successful build and assuming you're in `OdinLink-Five` cloned directory:
 
 ```bash
 echo "odl_tb5" | sudo tee /etc/modules-load.d/odl_tb5.conf
