@@ -29,7 +29,7 @@ Find latest stable kernel
 sudo mainline --list | grep "6.1[6-9]\|6.2"
 ```
 
-6.19.* at the moment had issues. I recommend 6.18.*, for example 6.18.20
+6.19.* at the moment had issues. I recommend 6.18.*, for example 6.18.10
 ```
 sudo mainline --install 6.18.20
 ```
@@ -117,7 +117,7 @@ sudo loginctl enable-linger $USER
 ```
 
 Install one of toolboxes from [kyuz0](https://hub.docker.com/r/kyuz0/amd-strix-halo-toolboxes/tags).
-At the moment `rocm7-nightlies` is the fastest in most cases but may have issues.
+At the moment `rocm7-nightlies` is the fastest in most cases but may have issues (at the end of April 2026 - only half mem visible).
 Take a look for [benchmark comparison](https://kyuz0.github.io/amd-strix-halo-toolboxes/)
 ```
 distrobox create rocm7-nightlies --image docker.io/kyuz0/amd-strix-halo-toolboxes:rocm7-nightlies --additional-flags "--device /dev/dri --device /dev/kfd --group-add video --group-add render  --security-opt seccomp=unconfined"
@@ -230,7 +230,7 @@ mmap = off
 split-mode = none
 fit = off
 warmup = off
-# Generally ubatch-size of 2048 is optimal for gfx1151
+# Generally ubatch-size of 2048 is optimal for gfx1151 for ROCm. Try 1024 for vulkan.
 ubatch-size = 2048
 batch-size  = 4096
 # high quants have tiny benefits; lower work badly on ROCm though cache-v = q5_1 would be nice for RAM saving
