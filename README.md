@@ -134,7 +134,7 @@ Now let's create systemd service to handle llama.cpp
 nano ~/.config/systemd/user/llama.service
 ```
 
-Paste this but pay attension to change `your-user-name` and customize `LLM_PORT=9999`
+Paste this but pay attention to change `your-user-name`.
 ```systemd
 [Unit]
 Description=llama.cpp distrobox-server
@@ -200,6 +200,9 @@ export GGML_HIP_NO_VMM=1
 export GGML_HIP_FORCE_MMQ=1
 export GGML_HIP_MAX_BATCH_SIZE=2048
 export GGML_HIP_NO_PINNED=1
+export ROCBLAS_USE_HIPBLASLT=1
+export HSA_OVERRIDE_GFX_VERSION=11.5.1
+export HSA_ENABLE_SDMA=0
 # allow 30 min for slow long prompt processing step
 export LLAMA_ARG_TIMEOUT=1800
 
@@ -207,8 +210,7 @@ exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
   numactl --cpunodebind=0 --membind=0 llama-server --numa numactl \
   --models-preset ${MY_DIR}/llama.ini \
   --models-max 1 \
-  --models-dir ${MY_DIR}/models \
-  -ngl 999 --parallel 1 -np 2 \
+  -ngl 999 --parallel 1 -np 2 --no-webui --no-mmap -fa 1 -nocb \
   --host 0.0.0.0 --port ${LLM_PORT}
 ```
 
@@ -222,7 +224,7 @@ Here's example of my configuration. Take a note on highly optimized params for Q
 version = 1
 
 [*]
-threads = 8
+threads = 2
 threads-batch = 8
 flash-attn = on
 mlock = off
@@ -230,85 +232,47 @@ mmap = off
 split-mode = none
 fit = off
 warmup = off
-# Generally ubatch-size of 2048 is optimal for gfx1151 for ROCm. Try 1024 for vulkan.
+# Generally ubatch-size of 2048 is optimal for gfx1151 for ROCm. Try 1024 for Vulkan.
 ubatch-size = 2048
-batch-size  = 4096
-# high quants have tiny benefits; lower work badly on ROCm though cache-v = q5_1 would be nice for RAM saving
+batch-size  = 8192
+# Quants higher Q8 have tiny benefits; lower degrade quality significantly
 cache-type-k = q8_0
 cache-type-v = q8_0
 jinja = true
 direct-io = on
 ctx-checkpoints = 20
 cache-prompt = true
-cache-reuse = 1024
+cache-reuse = 256
+cache-ram = 2048
 slot-prompt-similarity = 0.85
 top-k = 40
-
-[minimax]
-# This model works badly with draft and works on the edge of 128Gb RAM
-# These params help to avoid OOM
-model = /home/your-user-name/models/MiniMax-M2.5/UDQ3/MiniMax-M2.5-UD-Q3_K_XL-00001-of-00004.gguf
-reasoning-format = deepseek
-reasoning = on
-# probably more optimal for this model
-ubatch-size = 1536
-batch-size  = 3072
-#
-repeat-last-n = 512
-ctx-checkpoints = 15
-ctx-size = 53000
-repeat-penalty = 1.05
-n-predict = 16384
-temp = 0.8
 top-p = 0.95
 min-p = 0.01
-
-[qwen3.5]
-model = /home/your-user-name/models/Qwen3.5/Qwen3.5-122B-A10B-UD-Q5_K_XL-00001-of-00003.gguf
-reasoning-format = deepseek
+swa-full = on
+# thinking
+reasoning = off
 chat-template-kwargs = {"enable_thinking":false}
-chat-template-file = /home/akubintsev/models/qwen3_nonthinking.jinja
-swa-full = on
-ctx-size = 150000
-ctx-checkpoints = 20
-n-predict = 16384
-repeat-last-n = 512
-temp = 0.7
-top-p = 0.95
-min-p = 0.00
-presence-penalty = 2.0
-repeat-penalty = 1.1
-
-[qwen3-coder]
-model = /home/your-user-name/models/Qwen3Coder-Q8/Qwen3-Coder-Next-UD-Q8_K_XL-00001-of-00003.gguf
-ctx-size = 196608
-swa-full = on
-n-predict = 16384
-repeat-last-n = 512
-temp = 0.8
-top-p = 0.95
-top-k = 40
-min-p = 0.01
-repeat-penalty = 1.1
-presence-penalty = 1.5
+# spec decoding
 spec-type = ngram-map-k
-#spec-use-checkpoints = on
-# maybe you should tune this params to achieve acceptance to range of 0.6~0.0.9
-draft-max = 48
-draft-p-min = 0.8
+spec-ngram-map-k-size-n = 8
+spec-ngram-map-k-size-m = 4
+spec-draft-n-min = 1
+spec-draft-n-max = 4
+draft-p-min = 0.9
 
-[GPT]
-model = /home/your-user-name/models/GPT/gpt-oss-120b-Q8_0-00001-of-00002.gguf
-reasoning-format = deepseek
-chat-template-kwargs = {"reasoning_effort": "high"}
-ctx-size = 131072
-ctx-checkpoints = 20
-swa-full = on
-temp = 0.3
-min-p = 0.01
-top-p = 0.95
-presence-penalty = 2.0
-repeat-penalty = 1.05
+[qwen3.5-27B]
+model = /home/your-user-name/models/Qwen3.5-27B-GGUF/Qwen3.5-27B-UD-Q8_K_XL.gguf
+temp = 0.6
+top-k = 30
+
+[qwen3.6-35B]
+model = /home/your-user-name/models/Qwen3.6-35B-A3B/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf
+temp = 0.9
+
+[qwen3.5-122B]
+model = /home/your-user-name/models/Qwen3.5-122B-A10B/Qwen3.5-122B-A10B-APEX-I-Quality.gguf
+ctx-size = 200000
+temp = 0.9
 ```
 
 Now register your service
