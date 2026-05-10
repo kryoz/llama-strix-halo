@@ -235,9 +235,10 @@ warmup = off
 # Generally ubatch-size of 2048 is optimal for gfx1151 for ROCm. Try 1024 for Vulkan.
 ubatch-size = 2048
 batch-size  = 8192
-# Quants higher Q8 have tiny benefits; lower degrade quality significantly
-cache-type-k = q8_0
-cache-type-v = q8_0
+# You can use this params in case of huge models ~100Gb to save the RAM for KV cache.
+# But even Q8 kv cache leads to degradation in multi-step generation. Default is fp16
+#cache-type-k = q8_0
+#cache-type-v = q8_0
 jinja = true
 direct-io = on
 ctx-checkpoints = 20
@@ -257,7 +258,7 @@ spec-type = ngram-map-k
 spec-ngram-map-k-size-n = 8
 spec-ngram-map-k-size-m = 4
 spec-draft-n-min = 1
-spec-draft-n-max = 4
+spec-draft-n-max = 3
 draft-p-min = 0.9
 
 [qwen3.5-27B]
@@ -272,7 +273,8 @@ temp = 0.9
 [qwen3.5-122B]
 model = /home/your-user-name/models/Qwen3.5-122B-A10B/Qwen3.5-122B-A10B-APEX-I-Quality.gguf
 ctx-size = 200000
-temp = 0.9
+temp = 0.2
+top-k = 20
 ```
 
 Now register your service
@@ -356,6 +358,17 @@ sudo ryzenadj \
   --set-coall=0xFFFEC
 ```
 
+If you upgraded cooling or at least thermal interface you may try increase TDP up to 140W but MONITOR TEMPERATURES UNDER LOAD!
+```bash
+sudo ryzenadj \
+  --stapm-limit=140000 \
+  --fast-limit=150000 \
+  --slow-limit=140000 \
+  --apu-slow-limit=90000 \
+  --tctl-temp=88 \
+  --set-coall=0xFFFEC
+```
+
 Permanent set as service:
 ```bash
 sudo nano /etc/systemd/system/ryzenadj.service
@@ -385,8 +398,6 @@ sudo systemctl status ryzenadj.service
 
 If you've got this miniPC with v1.12 BIOS you probably was annoyed by minimum of UMA setting 2Gb RAM.
 
-In prev versions of the firmware there was even 512M so it's about 1.5Gb of RAM which has become unusable.
-
 You can examine list of firmwares [here](https://strixhalo.wiki/Hardware/Boards/Sixunited_AXB35/Firmware)
 ---
 **!!!DO NOT EVEN TRY TO FLASH v1.05 IF YOU HAD v1.12 FROM FACTORY!!!**
@@ -409,13 +420,7 @@ If not here's a recipe.
 9. Don't touch anything and pray :) Very scary part really.
 10. No, it's not all over :) After all is done goto BIOS and reset all settings to default.
 11. Reboot and goto BIOS again. Now you can select UMA 1Gb.
-12. We can do better :) After applying and reboot return to BIOS.
-13. Hit Alt+F5. You'll be notified about enabling debug settings. If 2nd Advanced tab didn't appear save and reboot again
-14. In the 2nd Advanced tab look for GFX settings. I don't recommend to change anything else by the way.
-15. Select 0.5Gb at last and save the settings.
-16. Congratulations!
-
-UPDATE: Setting to 512Mb worked only once for me :(
+12. Congratulations!
 
 ---
 
