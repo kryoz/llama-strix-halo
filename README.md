@@ -7,8 +7,6 @@ This note describes how to configure step by step local high-performance LLM set
 Before you proceed **you MUST configure BIOS** settings in graphics section to dedicate **MINIMUM** amount of RAM to GPU in UMA_SPECIFIED section.
 Some systems allow to select 512Mb, some 2Gb.
 
-Also for more predictable CPU threads aligning by `numactl` - **disable SMT (hyper-threading)**.
-
 Login to your shell then let's install repo for the newest kernel.
 ```bash
 sudo add-apt-repository ppa:cappelikan/ppa -y
@@ -26,12 +24,12 @@ your-user-login      ALL=(ALL) NOPASSWD: ALL
 
 Find latest stable kernel
 ```
-sudo mainline --list | grep "6.1[6-9]\|6.2"
+sudo mainline --list | grep "6.1[6-9]\|7.0"
 ```
 
-6.19.* at the moment had issues. I recommend 6.18.*, for example 6.18.10
+You can try 7.0.4 even on Ubuntu 24.04 LTS
 ```
-sudo mainline --install 6.18.20
+sudo mainline --install 7.0.4
 ```
 
 Edit kernel startup params
@@ -109,18 +107,21 @@ Paste to `/etc/security/limits.d/99-llm.conf`
 * hard memlock unlimited
 ```
 
-Install podman and distrobox
-```bash
-sudo apt install podman -y
-curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sudo sh
-sudo loginctl enable-linger $USER
-```
+You have 2 easy options for installation:
+- As portable Lemonade ROCm backend (recommended)
+- As distrobox/podman container 
 
-Install one of toolboxes from [kyuz0](https://hub.docker.com/r/kyuz0/amd-strix-halo-toolboxes/tags).
-At the moment `rocm7-nightlies` is the fastest in most cases but may have issues (at the end of April 2026 - only half mem visible).
-Take a look for [benchmark comparison](https://kyuz0.github.io/amd-strix-halo-toolboxes/)
-```
-distrobox create rocm7-nightlies --image docker.io/kyuz0/amd-strix-halo-toolboxes:rocm7-nightlies --additional-flags "--device /dev/dri --device /dev/kfd --group-add video --group-add render  --security-opt seccomp=unconfined"
+Below I'm going to cover only Lemonade as the most easy and optimized way.
+
+ROCm driver dependencies are included in distro.
+Proceed to https://github.com/lemonade-sdk/llamacpp-rocm/releases and download the latest zip for Ubuntu (for example `llama-b1286-ubuntu-rocm-gfx1151-x64.zip`). I assume you're going to install it to `~/llama` folder.
+
+```bash
+mkdir ~/llama && cd ~/llama
+wget llama-b1286-ubuntu-rocm-gfx1151-x64.zip
+unzip llama-b1286-ubuntu-rocm-gfx1151-x64.zip
+rm llama-b1286-ubuntu-rocm-gfx1151-x64.zip
+chmod +x llama*
 ```
 
 At this point I recommend to reboot first to apply all settings
@@ -128,7 +129,9 @@ At this point I recommend to reboot first to apply all settings
 sudo reboot
 ```
 
-Now let's create systemd service to handle llama.cpp
+## Autoloading llama.cpp
+
+Now let's create systemd user service to handle llama.cpp
 
 ```
 nano ~/.config/systemd/user/llama.service
@@ -151,8 +154,8 @@ StandardError=journal
 Environment="XDG_RUNTIME_DIR=/run/user/1000"
 Environment="LLM_PORT=9999"
 
-ExecStart=/home/your-user-name/llama-starter.sh
-ExecStop=/usr/local/bin/distrobox enter rocm7-nightlies -- /bin/bash -c "pkill -9 llama-server"
+ExecStart=/home/your-user-name/llama.sh
+ExecStop=/usr/bin/pgrep llama-server | xargs -r kill -9
 
 [Install]
 WantedBy=multi-user.target
@@ -160,122 +163,19 @@ WantedBy=multi-user.target
 
 Create wrapper script
 ```
-nano ~/llama-starter.sh
+nano ~/llama.sh
 ```
+[llama.sh](https://github.com/kryoz/llama-strix-halo/blob/main/llama.sh)
 
-
-Next script will configure llama.cpp to load models dynamically which were found at dir `~/models`.
-
-I tuned params to handle at agents workflow as fast as it can be.
-
-`numactl --cpunodebind=0 --membind=0 ` - binds to CPU CCD 0 (to use all threads on that CCD and its L2 Cache). 
-
-Note! You must install it manually **in the container**:
-```
-distrobox enter rocm7-nightly
-sudo dnf install numactl
-exit
-```
-
-Using all CPUs CCDs makes less efficient job processing due to concurrent memory access between them and GPU.
-
-`--models-max 1` specifies to handle up 1 models in RAM. The only stable option for auto loading/unloading model on demand.
-
-`--parallel 1` - max 1 requests processed at once. Available ctx-size divides by this param.
-
-Don't use without specific needs `-cb` -  continous batching, it confronts with speculative decoding feature.
-
-
-Paste and modify again `your-user-name`.
-```
-nano ~/llama-starter.sh
-```
-```bash
-#!/bin/bash
-
-export XDG_RUNTIME_DIR="/run/user/$(id -u)"
-export MY_DIR=/home/your-user-name
-
-export GGML_HIP_NO_VMM=1
-export GGML_HIP_FORCE_MMQ=1
-export GGML_HIP_MAX_BATCH_SIZE=2048
-export GGML_HIP_NO_PINNED=1
-export ROCBLAS_USE_HIPBLASLT=1
-export HSA_OVERRIDE_GFX_VERSION=11.5.1
-export HSA_ENABLE_SDMA=0
-# allow 30 min for slow long prompt processing step
-export LLAMA_ARG_TIMEOUT=1800
-
-exec /usr/local/bin/distrobox enter rocm7-nightlies -- \
-  numactl --cpunodebind=0 --membind=0 llama-server --numa numactl \
-  --models-preset ${MY_DIR}/llama.ini \
-  --models-max 1 \
-  -ngl 999 --parallel 1 -np 2 --no-webui --no-mmap -fa 1 -nocb \
-  --host 0.0.0.0 --port ${LLM_PORT}
-```
+The script will configure llama.cpp to load models dynamically which were found at dir `~/models`.
 
 Create custom config for models
 ```
 nano ~/llama.ini
 ```
+[llama.ini](https://github.com/kryoz/llama-strix-halo/blob/main/llama.ini)
 
-Here's example of my configuration. Take a note on highly optimized params for Qwen3 Coder Next (speculative decoding without providing draft model) 
-```ini
-version = 1
 
-[*]
-threads = 2
-threads-batch = 8
-flash-attn = on
-mlock = off
-mmap = off
-split-mode = none
-fit = off
-warmup = off
-# Generally ubatch-size of 2048 is optimal for gfx1151 for ROCm. Try 1024 for Vulkan.
-ubatch-size = 2048
-batch-size  = 8192
-# You can use this params in case of huge models ~100Gb to save the RAM for KV cache.
-# But even Q8 kv cache leads to degradation in multi-step generation. Default is fp16
-#cache-type-k = q8_0
-#cache-type-v = q8_0
-jinja = true
-direct-io = on
-ctx-checkpoints = 20
-cache-prompt = true
-cache-reuse = 256
-cache-ram = 2048
-slot-prompt-similarity = 0.85
-top-k = 40
-top-p = 0.95
-min-p = 0.01
-swa-full = on
-# thinking
-reasoning = off
-chat-template-kwargs = {"enable_thinking":false}
-# spec decoding
-spec-type = ngram-map-k
-spec-ngram-map-k-size-n = 8
-spec-ngram-map-k-size-m = 4
-spec-draft-n-min = 1
-spec-draft-n-max = 3
-draft-p-min = 0.9
-
-[qwen3.5-27B]
-model = /home/your-user-name/models/Qwen3.5-27B-GGUF/Qwen3.5-27B-UD-Q8_K_XL.gguf
-temp = 0.6
-top-k = 30
-
-[qwen3.6-35B]
-model = /home/your-user-name/models/Qwen3.6-35B-A3B/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf
-temp = 0.9
-
-[qwen3.5-122B]
-model = /home/your-user-name/models/Qwen3.5-122B-A10B/Qwen3.5-122B-A10B-APEX-I-Quality.gguf
-ctx-size = 200000
-temp = 0.2
-top-k = 20
-```
 
 Now register your service
 ```
@@ -290,8 +190,6 @@ journalctl --user -u llama -f -n 100
 ```
 
 I hope it helped you.
-
-Also my credits to https://github.com/Gygeek/Framework-strix-halo-llm-setup 
 
 ---
 
@@ -354,7 +252,7 @@ sudo ryzenadj \
   --fast-limit=140000 \
   --slow-limit=120000 \
   --apu-slow-limit=90000 \
-  --tctl-temp=88 \
+  --tctl-temp=90 \
   --set-coall=0xFFFEC
 ```
 
@@ -365,7 +263,7 @@ sudo ryzenadj \
   --fast-limit=150000 \
   --slow-limit=140000 \
   --apu-slow-limit=90000 \
-  --tctl-temp=88 \
+  --tctl-temp=90 \
   --set-coall=0xFFFEC
 ```
 
@@ -381,7 +279,7 @@ After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/ryzenadj --stapm-limit=120000 --fast-limit=140000 --slow-limit=120000 --apu-slow-limit=90000 --tctl-temp=87 --set-coall=0xFFFEC
+ExecStart=/usr/local/bin/ryzenadj --stapm-limit=120000 --fast-limit=140000 --slow-limit=120000 --apu-slow-limit=90000 --tctl-temp=90 --set-coall=0xFFFEC
 RemainAfterExit=yes
 
 [Install]
@@ -424,7 +322,7 @@ If not here's a recipe.
 
 ---
 
-# USB4/Thunderbolt/RDMA breakthrough for lowest latency
+# USB4/Thunderbolt/RDMA low latency driver
 
 Refer to drivers [OdinLink-Five](https://github.com/Geramy/OdinLink-Five), follow a building guide.
 
