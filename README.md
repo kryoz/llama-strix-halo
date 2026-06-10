@@ -131,37 +131,7 @@ sudo reboot
 
 ## Autoloading llama.cpp
 
-Now let's create systemd user service to handle llama.cpp
-
-```
-nano ~/.config/systemd/user/llama.service
-```
-
-Paste this but pay attention to change `your-user-name`.
-```systemd
-[Unit]
-Description=llama.cpp distrobox-server
-After=network.target user@1000.service
-
-[Service]
-Type=simple
-WorkingDirectory=/home/your-user-name
-Restart=on-failure
-RestartSec=10
-TimeoutStopSec=10
-StandardOutput=journal
-StandardError=journal
-Environment="XDG_RUNTIME_DIR=/run/user/1000"
-Environment="LLM_PORT=9999"
-
-ExecStart=/home/your-user-name/llama.sh
-ExecStop=/usr/bin/pgrep llama-server | xargs -r kill -9
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Create wrapper script
+Let's create llama.cpp launcher script:
 ```
 nano ~/llama.sh
 ```
@@ -169,27 +139,36 @@ nano ~/llama.sh
 
 The script will configure llama.cpp to load models dynamically which were found at dir `~/models`.
 
-Create custom config for models
+The example config for models:
 ```
 nano ~/llama.ini
 ```
 [llama.ini](https://github.com/kryoz/llama-strix-halo/blob/main/llama.ini)
 
 
-
-Now register your service
+Now let's create systemd user service to handle llama.cpp autostart or manual restart/stop when necessarry
 ```
+nano ~/.config/systemd/user/llama.service
+```
+Paste from [llama.service](https://github.com/kryoz/llama-strix-halo/blob/main/llama.service) but pay attention to change `user` to yours.
+
+There's also another optional [llama-journal.service](https://github.com/kryoz/llama-strix-halo/blob/main/llama-journal.service) service which opens 8888 ports for getting streaming logs from llama.cpp. Afterwards connect from your notebook with command:
+```bash
+nc strix 8888
+```
+
+Now register your service(s)
+```bash
 sudo systemctl daemon-reload
 systemctl --user enable llama.service
+systemctl --user enable --now llama-journal.service
 ```
 
 Then try to start service and read the journal
-```
+```bash
 systemctl --user start llama.service
 journalctl --user -u llama -f -n 100
 ```
-
-I hope it helped you.
 
 ---
 
