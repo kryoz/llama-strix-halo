@@ -13,8 +13,8 @@ export LLAMA_ARG_TIMEOUT=1800
 export LLM_PORT=9999
 
 CMD="./llama-server --numa numactl \
-  -t 8 -tb 8 --parallel 2 -dio  \
-  -ngl 999 -ngld 999 --no-mmap -fa 1 -cb --kv-unified --no-ui \
+  -t 8 -tb 8 --threads-http 8 --parallel 2 -dio --kv-unified --no-ui \
+  -ngl 999 -ngld 999 --no-mmap -fa 1 -cb -cms 512 \
   --models-preset ${HOME}/llama.ini --models-max 1 \
   --host 0.0.0.0 --port ${LLM_PORT}"
 
