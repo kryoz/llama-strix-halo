@@ -1,0 +1,19 @@
+[Unit]
+Description=llama.cpp netcat streaming journal
+After=network.target user@1000.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/user
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=10
+StandardOutput=journal
+StandardError=journal
+
+OOMScoreAdjust=-500
+
+ExecStart=/bin/bash -c 'journalctl --user -u llama.service -f --no-hostname --output=short-precise | sed -u "s/^.*\]: //" | socat -u - TCP-LISTEN:8888,reuseaddr,fork'
+
+[Install]
+WantedBy=default.target
