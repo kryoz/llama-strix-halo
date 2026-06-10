@@ -1,0 +1,22 @@
+[Unit]
+Description=llama.cpp server
+After=network.target user@1000.service
+
+[Service]
+Type=simple
+# specify your llama installation folder here
+WorkingDirectory=/home/user/llama
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=10
+StandardOutput=journal
+StandardError=journal
+
+OOMScoreAdjust=-500
+
+# specify location of llama service starting script
+ExecStart=/home/user/llama.sh
+ExecStop=/bin/bash -c 'pgrep llama-server | xargs -r kill -9'
+
+[Install]
+WantedBy=default.target
